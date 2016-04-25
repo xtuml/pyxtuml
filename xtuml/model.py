@@ -256,8 +256,7 @@ class Query(object):
     def mk_generator(self):
         for inst in iter(self.table):
             for name, value in iter(self.items):
-                #if getattr(inst, name) != value or _is_null(inst, name):
-                if getattr(inst, name) != value:
+                if getattr(inst, name) != value or _is_null(inst, name):
                     break
             else:
                 self.result.append(inst)
