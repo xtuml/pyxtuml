@@ -476,10 +476,7 @@ class MetaModel(object):
         
         # set all attributes with an initial default value
         for name, ty in inst.__a__:
-            if name in inst.__d__:
-                value = None
-            else:
-                value = self._default_value(ty)
+            value = self._default_value(ty)
             setattr(inst, name, value)
             
         # set all positional arguments
