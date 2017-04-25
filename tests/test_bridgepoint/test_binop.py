@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 from tests.test_bridgepoint.utils import PrebuildFunctionTestCase
 from tests.test_bridgepoint.utils import prebuild_docstring
@@ -22,8 +37,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 12)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 12)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -50,8 +65,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 14)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 14)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -78,8 +93,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 12)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 12)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -106,8 +121,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 13)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 13)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -134,8 +149,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 16)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 16)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'real')
@@ -162,8 +177,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 12)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 12)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -190,8 +205,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 12)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 12)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'boolean')
@@ -218,8 +233,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 13)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 13)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'boolean')
@@ -246,8 +261,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 18)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 18)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -274,8 +289,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 18)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 18)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'integer')
@@ -302,8 +317,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 19)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 19)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'boolean')
@@ -337,8 +352,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 20)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 20)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'boolean')
@@ -365,8 +380,8 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.isLValue, False)
         self.assertEqual(v_val.isImplicit, False)
         self.assertEqual(v_val.LineNumber, 1)
-        self.assertEqual(v_val.startPosition, 8)
-        self.assertEqual(v_val.endPosition, 20)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 20)
         
         s_dt = one(v_val).S_DT[820]()
         self.assertEqual(s_dt.Name, 'boolean')

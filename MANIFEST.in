@@ -1,3 +1,5 @@
-include LICENSE
+include COPYING
+include COPYING.LESSER
 include AUTHORS
 include README.rst
+include requirements.txt

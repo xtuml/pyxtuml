@@ -1,11 +1,27 @@
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
 
 from xtuml import navigate_one as one
 from xtuml import navigate_any as any
 from xtuml import navigate_many as many
+from xtuml import navigate_subtype as subtype
 
 from xtuml.tools import Walker
 
@@ -90,17 +106,7 @@ class ActionTextGenWalker(Walker):
         self.buf_linebreak()
         
     def accept_ACT_SMT(self, inst):
-        children = ['ACT_FOR', 'ACT_WHL', 'ACT_IF', 'ACT_EL', 'ACT_E',
-                    'ACT_BRG', 'ACT_FNC', 'ACT_RET', 'ACT_TFM', 'ACT_AI',
-                    'ACT_DEL', 'ACT_CNV', 'ACT_CR', 'ACT_SEL', 'ACT_FIO',
-                    'ACT_FIW', 'ACT_URU', 'ACT_UNR', 'ACT_RU', 'ACT_REL',
-                    'ACT_CTL', 'ACT_BRK', 'ACT_CON', 'E_ESS', 'E_GPR',
-                    'ACT_IOP', 'ACT_SGN']
-        
-        for key_letter in children:
-            child = one(inst).nav(key_letter, 603)()
-            self.accept(child)
-            
+        self.accept(subtype(inst, 603))
         self.buf_linebreak(';')
         
     def accept_ACT_RET(self, inst):
@@ -237,7 +243,7 @@ class ActionTextGenWalker(Walker):
         self.buf('end while')
         
     def accept_ACT_IF(self, inst):
-        by_position = lambda inst: (one(inst).ACT_SMT[603]().lineNumber,
+        by_position = lambda inst: (one(inst).ACT_SMT[603]().LineNumber,
                                     one(inst).ACT_SMT[603]().StartPosition)
         
         self.buf('if ')
@@ -319,14 +325,7 @@ class ActionTextGenWalker(Walker):
         self.buf(')')
         
     def accept_V_VAL(self, inst):
-        children = ['V_FNV', 'V_PVL', 'V_SLR', 'V_BRV', 'V_IRF', 'V_AVL',
-                    'V_LIN', 'V_LST', 'V_UNY', 'V_TRV', 'V_ISR', 'V_EDV',
-                    'V_TVL', 'V_LRL', 'V_LBO', 'V_BIN', 'V_LEN', 'V_MVL',
-                    'V_AER', 'V_ALV', 'V_MSV', 'V_SCV']
-        
-        for key_letter in children:
-            child = one(inst).nav(key_letter, 801)()
-            self.accept(child)
+        self.accept(subtype(inst, 801))
             
     def accept_V_TVL(self, inst):
         self.accept(one(inst).V_VAR[805]())

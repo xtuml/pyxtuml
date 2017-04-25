@@ -16,9 +16,24 @@ association to check.
 
 **Note:** both the model and its schema needs to be provided by the user.
 
+**Available options**
+
+===============  ===================================================
+Option           Description
+===============  ===================================================
+--version        show program's version number and exit
+--help, -h       show this help message and exit
+-r <number>      limit consistency check to one or more associations
+-k <key letter>  limit check for uniqueness constraint violations to
+                 one or more classes
+--verbosity, -v  increase debug logging level
+===============  ===================================================
+
+BridgePoint metamodel
+~~~~~~~~~~~~~~~~~~~~~
 There is also a tool available that checks for constraint violations in ooaofooa,
 the metamodel used by the BridgePoint editor. It can be used to detect various
-issues in a BridgePoint model:
+fatal issues in a BridgePoint model, e.g. parameters that lacks a type.
 
 ::
 
@@ -35,6 +50,8 @@ Option           Description
 -r <number>      limit consistency check to one or more associations
 -k <key letter>  limit check for uniqueness constraint violations to
                  one or more classes
+--globals, -g    add builtin global data types automatically, e.g.
+                 boolean, integer and real
 --verbosity, -v  increase debug logging level
 ===============  ===================================================
 
@@ -54,6 +71,7 @@ Option                     Description
 --version                  show program's version number and exit
 --help, -h                 show this help message and exit
 --component=NAME, -c NAME  export sql schema for the component named NAME
+--derived-attributes, -d   include derived attributes in the schema
 --output=PATH, -o PATH     save sql schema to PATH (required)
 --verbosity, -v            increase debug logging level
 =========================  ==============================================

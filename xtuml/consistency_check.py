@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Check an xtuml model for association constraint violations in its metamodel.
 '''
@@ -13,40 +28,41 @@ import xtuml
 logger = logging.getLogger('consistency_check')
 
 
-def pretty_to_link(inst, from_link, to_link):
+def pretty_to_link(inst, link):
     '''
     Create a human-readable representation of a link on the 'TO'-side
     '''
     values = ''
     prefix = ''
- 
-    for name, ty in inst.__a__:
-        if name in from_link.ids:
+    metaclass = inst.__metaclass__
+
+    for name, ty in metaclass.attributes:
+        if name in link.key_map:
             value = getattr(inst, name)
             value = xtuml.serialize_value(value, ty)
-            idx = from_link.ids.index(name)
-            name = to_link.ids[idx]
+            name = link.key_map[name]
             values += '%s%s=%s' % (prefix, name, value)
             prefix = ', '
                 
-    return '%s(%s)' % (to_link.kind, values)
+    return '%s(%s)' % (link.kind, values)
         
 
-def pretty_from_link(inst, from_link, to_link):
+def pretty_from_link(inst, link):
     '''
     Create a human-readable representation of a link on the 'FROM'-side
     '''
     values = ''
     prefix = ''
- 
-    for name, ty in inst.__a__:
-        if name in inst.__i__:
+    metaclass = inst.__metaclass__
+    
+    for name, ty in metaclass.attributes:
+        if name in link.key_map:
             value = getattr(inst, name)
             value = xtuml.serialize_value(value, ty)
             values += '%s%s=%s' % (prefix, name, value)
             prefix = ', '
                 
-    return '%s(%s)' % (from_link.kind, values)
+    return '%s(%s)' % (metaclass.kind, values)
 
 
 def pretty_unique_identifier(inst, identifier):
@@ -55,9 +71,10 @@ def pretty_unique_identifier(inst, identifier):
     '''
     values = ''
     prefix = ''
+    metaclass = inst.__metaclass__
     
-    for name, ty in inst.__a__:
-        if name in inst.__u__[identifier]:
+    for name, ty in metaclass.attributes:
+        if name in metaclass.identifying_attributes:
             value = getattr(inst, name)
             value = xtuml.serialize_value(value, ty)
             values += '%s%s=%s' % (prefix, name, value)
@@ -65,51 +82,82 @@ def pretty_unique_identifier(inst, identifier):
                     
     return '%s(%s)' % (identifier, values)
 
+
 def check_uniqueness_constraint(m, kind=None):
     '''
     Check the model for uniqueness constraint violations.
     '''
     if kind is None:
-        classes = m.classes.values()
+        metaclasses = m.metaclasses.values()
     else:
-        classes = [m.classes[kind.upper()]]
+        metaclasses = [m.find_metaclass(kind)]
     
-    res = True
-    for Cls in classes:
-        for inst in m.select_many(Cls.__name__):
-            for identifier in Cls.__u__.keys():
+    res = 0
+    for metaclass in metaclasses:
+        for inst in metaclass.select_many():
+            
+            for name, ty in metaclass.attributes:
+                if name not in metaclass.identifying_attributes:
+                    continue
+                
+                value = getattr(inst, name)
+                isnull = value is None
+                isnull |= (ty == 'UNIQUE_ID' and not value)
+                if isnull:
+                    res += 1 
+                    logger.warning('%s.%s is part of an identifier and is null' 
+                                   % (metaclass.kind, name))
+            
+            
+            for identifier in metaclass.indices:
                 kwargs = dict()
-                for name in Cls.__u__[identifier]:
+                for name in metaclass.indices[identifier]:
                     kwargs[name] = getattr(inst, name)
                 
                 where_clause = xtuml.where_eq(**kwargs)
-                s = m.select_many(Cls.__name__, where_clause)
-                if len(s) != 1:
-                    res = False
+                s = metaclass.select_many(where_clause)
+                if len(s) > 1:
+                    res += 1
                     id_string = pretty_unique_identifier(inst, identifier)
                     logger.warning('uniqueness constraint violation in %s, %s' 
-                                   % (Cls.__name__, id_string))
+                                   % (metaclass.kind, id_string))
 
     return res
 
 
-def check_link_integrity(m, rel_id, from_link, to_link):
+def check_link_integrity(m, link):
     '''
     Check the model for integrity violations on an association in a particular direction.
     '''
-    res = True
-    for inst in m.select_many(from_link.kind):
-        nav_chain = xtuml.navigate_many(inst)
-        q_set = nav_chain.nav(to_link.kind, rel_id, to_link.phrase)()
+    res = 0
+    for inst in link.from_metaclass.select_many():
+        q_set = list(link.navigate(inst))
 
-        if(len(q_set) < 1 and not to_link.is_conditional) or (
-          (len(q_set) > 1 and not to_link.is_many)):
-            res = False
+        if(len(q_set) < 1 and not link.conditional) or (
+          (len(q_set) > 1 and not link.many)):
+            res += 1
             logger.warning('integrity violation in '
-                           '%s --(%s)--> %s' % (pretty_from_link(inst, from_link, to_link),
-                                                rel_id,
-                                                pretty_to_link(inst, from_link, to_link)))
+                           '%s --(%s)--> %s' % (pretty_from_link(inst, link),
+                                                link.rel_id,
+                                                pretty_to_link(inst, link)))
     
+    return res
+
+
+def check_subtype_integrity(m, super_kind, rel_id):
+    '''
+    Check the model for integrity violations across a subtype association.
+    '''
+    if isinstance(rel_id, int):
+        rel_id = 'R%d' % rel_id
+
+    res = 0
+    for inst in m.select_many(super_kind):
+        if not xtuml.navigate_subtype(inst, rel_id):
+            res += 1
+            logger.warning('integrity violation across '
+                           '%s[%s]' % (super_kind, rel_id))
+        
     return res
 
 
@@ -120,16 +168,16 @@ def check_association_integrity(m, rel_id=None):
     if isinstance(rel_id, int):
         rel_id = 'R%d' % rel_id
             
-    res = True
+    res = 0
     for ass in m.associations:
-        if rel_id in [ass.id, None]:
-            res &= check_link_integrity(m, ass.id, ass.source, ass.target)
-            res &= check_link_integrity(m, ass.id, ass.target, ass.source)
+        if rel_id in [ass.rel_id, None]:
+            res += check_link_integrity(m, ass.link)
+            res += check_link_integrity(m, ass.reversed_link)
 
     return res
 
 
-def main():
+def main(args):
     parser = optparse.OptionParser(usage="%prog [options] <sql_file> [another_sql_file...].",
                                    version=xtuml.version.complete_string,
                                    formatter=optparse.TitledHelpFormatter())
@@ -147,7 +195,7 @@ def main():
     parser.add_option("-v", "--verbosity", dest='verbosity', action="count",
                       help="increase debug logging level", default=1)
     
-    (opts, args) = parser.parse_args()
+    (opts, args) = parser.parse_args(args)
     if len(args) == 0:
         parser.print_help()
         sys.exit(1)
@@ -166,22 +214,23 @@ def main():
 
     m = loader.build_metamodel()
     
-    error = False
+    error = 0
     for rel_id in opts.rel_ids:
-        error |= xtuml.check_association_integrity(m, rel_id)
+        error += xtuml.check_association_integrity(m, rel_id)
     
     if not opts.rel_ids:
-        error |= xtuml.check_association_integrity(m)
+        error += xtuml.check_association_integrity(m)
 
     for kind in opts.kinds:
-        error |= xtuml.check_uniqueness_constraint(m, kind)
+        error += xtuml.check_uniqueness_constraint(m, kind)
     
     if not opts.kinds:
-        error |= xtuml.check_uniqueness_constraint(m)
+        error += xtuml.check_uniqueness_constraint(m)
         
-    sys.exit(error)
+    return error
     
     
 if __name__ == '__main__':
-    main()
+    num_errors = main(sys.argv[1:])
+    sys.exit(num_errors > 0)
 

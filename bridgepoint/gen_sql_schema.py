@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Generate an sql schema file for an xtUML model. 
 The arguments are either xtuml files, or folders containing *.xtuml files.
@@ -34,6 +49,10 @@ def main():
                       help="export sql schema for the component named NAME",
                       action="store", default=None)
     
+    parser.add_option("-d", "--derived-attributes", dest="derived",
+                      help="include derived attributes in the schema",
+                      action="store_true", default=False)
+    
     parser.add_option("-o", "--output", dest='output', metavar="PATH",
                       help="save sql schema to PATH (required)",
                       action="store", default=None)
@@ -59,7 +78,7 @@ def main():
     for filename in args:
         loader.filename_input(filename)
 
-    c = loader.build_component(opts.component)
+    c = loader.build_component(opts.component, opts.derived)
     xtuml.persist_database(c, opts.output)
 
     

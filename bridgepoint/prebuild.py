@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Transform OAL actions from its textual form into instances in a the ooaofooa
 metamodel.
@@ -1800,8 +1815,8 @@ def prebuild_action(instance):
         'SPR_PO': ProvidedOperationPrebuilder,
         'SPR_PS': ProvidedSignalPrebuilder
     }
-    kind = instance.__class__.__name__
-    walker = walker_map[kind](instance.__m__, instance)
+    metaclass = instance.__metaclass__
+    walker = walker_map[metaclass.kind](metaclass.metamodel, instance)
     logger.info('processing action %s' % walker.label)
     # walker.visitors.append(xtuml.tools.NodePrintVisitor())
     root = oal.parse(instance.Action_Semantics_internal)

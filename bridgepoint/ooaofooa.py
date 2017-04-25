@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import logging
@@ -3752,27 +3767,13 @@ def is_global(pe_pe):
     return is_global(pe_pe)
 
 
-def mult_cond(mult, cond):
-    '''
-    Create the cardinality string used on xtuml associations.
-    '''
-    if mult:
-        s = 'M'
-    else:
-        s = '1'
-    if cond:
-        s += 'C'
-        
-    return s
-
-
 def get_data_type_name(s_dt):
     '''
     Convert a BridgePoint data type to a pyxtuml meta model type.
     '''
     s_cdt = one(s_dt).S_CDT[17]()
-    if s_cdt and s_cdt.core_typ in range(1, 6):
-        return s_dt.name
+    if s_cdt and s_cdt.Core_Typ in range(1, 6):
+        return s_dt.Name
     
     if one(s_dt).S_EDT[17]():
         return 'INTEGER'
@@ -3813,7 +3814,7 @@ def get_related_attributes(r_rgo, r_rto):
     return l1, l2
 
             
-def mk_class(m, o_obj):
+def mk_class(m, o_obj, derived_attributes=False):
     '''
     Create a pyxtuml class from a BridgePoint class.
     '''
@@ -3823,19 +3824,28 @@ def mk_class(m, o_obj):
         
     while o_attr:
         ty = get_attribute_type(o_attr)
-        if ty and not one(o_attr).O_BATTR[106].O_DBATTR[107]():
-            attributes.append((o_attr.Name, ty))
-        else:
+        if not derived_attributes and one(o_attr).O_BATTR[106].O_DBATTR[107]():
+            logger.warning('Omitting derived attribute %s.%s ' %
+                           (o_obj.Key_Lett, o_attr.Name))
+        elif not ty:
             logger.warning('Omitting unsupported attribute %s.%s ' %
                            (o_obj.Key_Lett, o_attr.Name))
-            
+        else:
+            attributes.append((o_attr.Name, ty))
+        
         o_attr = one(o_attr).O_ATTR[103, 'succeeds']()
             
     Cls = m.define_class(o_obj.Key_Lett, list(attributes), o_obj.Descrip)
 
     for o_id in many(o_obj).O_ID[104]():
         o_oida = many(o_id).O_OIDA[105]()
-        names = [o_attr.Name for o_attr in many(o_oida).O_ATTR[105]()]
+        o_attrs = many(o_oida).O_ATTR[105]()
+        if not derived_attributes and one(o_attrs).O_BATTR[106].O_DBATTR[107]():
+            logger.warning('Omitting unique identifier %s.I%d' %
+                           (o_obj.Key_Lett, o_id.Oid_ID + 1))
+            continue
+        
+        names = [o_attr.Name for o_attr in o_attrs]
         m.define_unique_identifier(o_obj.Key_Lett, o_id.Oid_ID + 1, *names)
     
     return Cls
@@ -3859,22 +3869,25 @@ def mk_simple_association(m, inst):
     
     source_o_obj = one(r_rgo).R_OIR[203].O_OBJ[201]()
     target_o_obj = one(r_rto).R_OIR[203].O_OBJ[201]()
-    
-    source_cardinality = mult_cond(r_form.Mult, r_form.Cond)
-    target_cardinality = mult_cond(r_part.Mult, r_part.Cond)
-    
     source_ids, target_ids = get_related_attributes(r_rgo, r_rto)
-    
-    source = xtuml.AssociationLink(source_o_obj.Key_Lett, source_cardinality,
-                                   source_ids, r_part.Txt_Phrs)
 
-    target = xtuml.AssociationLink(target_o_obj.Key_Lett, target_cardinality,
-                                   target_ids, r_form.Txt_Phrs)
-    
-    if target.kind != source.kind:
-        target.phrase = source.phrase = ''
-        
-    m.define_association(r_rel.Numb, source, target)
+    if source_o_obj.Obj_ID != target_o_obj.Obj_ID:
+        source_phrase = target_phrase = ''
+    else:
+        source_phrase = r_part.Txt_Phrs
+        target_phrase = r_form.Txt_Phrs
+            
+    m.define_association(rel_id=r_rel.Numb, 
+                         source_kind=source_o_obj.Key_Lett,
+                         target_kind=target_o_obj.Key_Lett,
+                         source_keys=source_ids,
+                         target_keys=target_ids,
+                         source_conditional=r_form.Cond,
+                         target_conditional=r_part.Cond,
+                         source_phrase=source_phrase,
+                         target_phrase=target_phrase,
+                         source_many=r_form.Mult,
+                         target_many=r_part.Mult,)
 
 
 def mk_linked_association(m, inst):
@@ -3885,22 +3898,28 @@ def mk_linked_association(m, inst):
     r_rgo = one(inst).R_ASSR[211].R_RGO[205]()
     source_o_obj = one(r_rgo).R_OIR[203].O_OBJ[201]()
     
-    def _mk_link(side1, side2):
+    def _mk_assoc(side1, side2):
         r_rto = one(side1).R_RTO[204]()
 
         target_o_obj = one(r_rto).R_OIR[203].O_OBJ[201]()
-        cardinality = mult_cond(side2.Mult, side2.Cond)
         source_ids, target_ids = get_related_attributes(r_rgo, r_rto)
-    
-        source = xtuml.AssociationLink(source_o_obj.Key_Lett, cardinality,
-                                       source_ids, side1.Txt_Phrs)
-        target = xtuml.AssociationLink(target_o_obj.Key_Lett, '1', target_ids,
-                                       side2.Txt_Phrs)
-
         if side1.Obj_ID != side2.Obj_ID:
-            target.phrase = source.phrase = ''
-        
-        m.define_association(r_rel.Numb, source, target)
+            source_phrase = target_phrase = ''
+        else:
+            source_phrase = side1.Txt_Phrs
+            target_phrase = side2.Txt_Phrs
+            
+        m.define_association(rel_id=r_rel.Numb, 
+                             source_kind=source_o_obj.Key_Lett,
+                             target_kind=target_o_obj.Key_Lett,
+                             source_keys=source_ids,
+                             target_keys=target_ids,
+                             source_conditional=side2.Cond,
+                             target_conditional=False,
+                             source_phrase=source_phrase,
+                             target_phrase=target_phrase,
+                             source_many=side2.Mult,
+                             target_many=False)
         
     r_aone = one(inst).R_AONE[209]()
     r_aoth = one(inst).R_AOTH[210]()
@@ -3909,8 +3928,8 @@ def mk_linked_association(m, inst):
         logger.info('Omitting unformalized association R%s' % (r_rel.Numb))
         return
     
-    _mk_link(r_aone, r_aoth)
-    _mk_link(r_aoth, r_aone)
+    _mk_assoc(r_aone, r_aoth)
+    _mk_assoc(r_aoth, r_aone)
   
     
 def mk_subsuper_association(m, inst):
@@ -3930,12 +3949,18 @@ def mk_subsuper_association(m, inst):
 
         source_o_obj = one(r_rgo).R_OIR[203].O_OBJ[201]()
         source_ids, target_ids = get_related_attributes(r_rgo, r_rto)
-        
-        source = xtuml.AssociationLink(source_o_obj.Key_Lett, '1C', source_ids)
-        target = xtuml.AssociationLink(target_o_obj.Key_Lett, '1', target_ids)
-        
-        m.define_association(r_rel.Numb, source, target)
-
+        m.define_association(rel_id=r_rel.Numb, 
+                             source_kind=source_o_obj.Key_Lett,
+                             target_kind=target_o_obj.Key_Lett,
+                             source_keys=source_ids,
+                             target_keys=target_ids,
+                             source_conditional=True,
+                             target_conditional=False,
+                             source_phrase='',
+                             target_phrase='',
+                             source_many=False,
+                             target_many=False)
+                           
 
 def mk_derived_association(m, inst):
     '''
@@ -3959,7 +3984,7 @@ def mk_association(m, r_rel):
     return fn(m, inst)
 
 
-def mk_component(bp_model, c_c=None):
+def mk_component(bp_model, c_c=None, derived_attributes=False):
     '''
     Create a pyxtuml meta model from a BridgePoint model. 
     Optionally, restrict to classes and associations contained in the
@@ -3970,7 +3995,7 @@ def mk_component(bp_model, c_c=None):
     c_c_filt = lambda sel: c_c is None or is_contained_in(sel, c_c)
     
     for o_obj in bp_model.select_many('O_OBJ', c_c_filt):
-        mk_class(target, o_obj)
+        mk_class(target, o_obj, derived_attributes)
         
     for r_rel in bp_model.select_many('R_REL', c_c_filt):
         mk_association(target, r_rel)
@@ -4004,42 +4029,48 @@ class ModelLoader(xtuml.ModelLoader):
         else:
             xtuml.ModelLoader.filename_input(self, path_or_filename)
 
-    def build_component(self, name=None):
+    def build_component(self, name=None, derived_attributes=False):
+        '''
+        Instantiate and build a component from ooaofooa named *name* as a
+        pyxtuml model. Classes, associations, attributes and unique identifers,
+        i.e. O_OBJ, R_REL, O_ATTR in ooaofooa, are defined in the resulting
+        pyxtuml model.
+        
+        Optionally, control whether *derived attributes* shall be mapped into
+        the resulting pyxtuml model as attributes or not.
+        
+        Futhermore, if no *name* is provided, the entire content of the ooaofooa
+        model is instantiated into the pyxtuml model.
+        '''
         mm = self.build_metamodel()
         c_c = mm.select_any('C_C', where(Name=name))
         if c_c:
-            return mk_component(mm, c_c)
+            return mk_component(mm, c_c, derived_attributes)
         elif name:
             raise Exception('Unable to find the component %s' % name)
         else:
-            return mk_component(mm, c_c)
+            return mk_component(mm, c_c, derived_attributes)
 
 
-# Backwards compatabillity with older versions of pyxtuml
-Loader = ModelLoader
-
-
-def empty_model():
-    '''
-    Load and return an empty metamodel expressed in ooaofooa.
-    '''
-    loader = Loader()
-    return loader.build_metamodel()
-
-
-def load_metamodel(resource):
+def load_metamodel(resource=None, load_globals=True):
     '''
     Load and return a metamodel expressed in ooaofooa from a *resource*.
     The resource may be either a filename, a path, or a list of filenames
     and/or paths.
     '''
+    resource = resource or list()
+        
     if isinstance(resource, str):
         resource = [resource]
         
-    loader = Loader()
+    loader = Loader(load_globals)
     for filename in resource:
         loader.filename_input(filename)
     
     return loader.build_metamodel()
 
+
+# Backwards compatabillity with older versions of pyxtuml
+Loader = ModelLoader
+empty_model = load_metamodel
 

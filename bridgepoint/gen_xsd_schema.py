@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Generate an xsd schema file for an xtUML model. 
 The arguments are either xtuml files, or folders containing *.xtuml files.
@@ -30,16 +45,16 @@ def get_type_name(s_dt):
     get the xsd name of a S_DT
     '''
     s_cdt = nav_one(s_dt).S_CDT[17]()
-    if s_cdt and s_cdt.core_typ in range(1, 6):
-        return s_dt.name
+    if s_cdt and s_cdt.Core_Typ in range(1, 6):
+        return s_dt.Name
     
     s_edt = nav_one(s_dt).S_EDT[17]()
     if s_edt:
-        return s_dt.name
+        return s_dt.Name
     
     s_udt = nav_one(s_dt).S_UDT[17]()
     if s_udt:
-        return s_dt.name
+        return s_dt.Name
 
 #    s_sdt = nav_one(s_dt).S_SDT[17]()
 #    if s_sdt:

@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import unittest
 import sys
@@ -33,16 +48,21 @@ class BuildCommand(build_py):
 
 class TestCommand(Command):
     description = "Execute unit tests"
-    user_options = []
+    user_options = [('name=', None, 'Limit testing to a single test case or test method')]
 
     def initialize_options(self):
-        pass
+        self.name = None
     
     def finalize_options(self):
-        pass
+        if self.name and not self.name.startswith('tests.'):
+            self.name = 'tests.' + self.name
 
     def run(self):
-        suite = unittest.TestLoader().discover('tests')
+        if self.name:
+            suite = unittest.TestLoader().loadTestsFromName(self.name)
+        else:
+            suite = unittest.TestLoader().discover('tests')
+        
         runner = unittest.TextTestRunner(verbosity=2, buffer=True)
         exit_code = not runner.run(suite).wasSuccessful()
         sys.exit(exit_code)
@@ -53,18 +73,17 @@ setup(name='pyxtuml',
       description='Library for parsing, manipulating, and generating BridgePoint xtUML models',
       author='John Törnblom',
       author_email='john.tornblom@gmail.com',
-      url='https://github.com/john-tornblom/pyxtuml',
-      license='GPLv3',
+      url='https://github.com/xtuml/pyxtuml',
+      license='LGPLv3+',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
           'Topic :: Software Development :: Code Generators',
           'Topic :: Software Development :: Compilers',
-          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
           'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.4'],
+          'Programming Language :: Python :: 3.5'],
       keywords='xtuml bridgepoint',
-      platforms=["Linux"],
       packages=['xtuml', 'bridgepoint'],
       requires=['ply'],
       cmdclass={'build_py': BuildCommand,

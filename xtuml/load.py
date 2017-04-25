@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 '''
 Loading support for xtUML models (based on sql).
@@ -77,6 +92,9 @@ def deserialize_value(ty, value):
 
 
 class ParsingException(Exception):
+    '''
+    An exception that may be thrown while loading (and parsing) a metamodel.
+    '''
     pass
 
 
@@ -87,6 +105,7 @@ class CreateInstanceStmt(object):
         self.values = values
         self.names = names
 
+
 class CreateClassStmt(object):
     
     def __init__(self, kind, attributes):
@@ -94,11 +113,19 @@ class CreateClassStmt(object):
         self.attributes = attributes
         
 
-class CreateRelatationStmt(object):
-    
-    def __init__(self, ass1, ass2, rel_id):
-        self.end_points = (ass1, ass2)
-        self.id = rel_id
+class CreateAssociationStmt(object):
+    def __init__(self, rel_id, source_kind, source_cardinality, source_keys, 
+                 source_phrase, target_kind, target_cardinality, target_keys,
+                target_phrase):
+        self.rel_id = rel_id
+        self.source_kind = source_kind
+        self.target_kind = target_kind
+        self.source_keys = source_keys
+        self.target_keys = target_keys
+        self.source_cardinality = source_cardinality
+        self.target_cardinality = target_cardinality
+        self.source_phrase = source_phrase
+        self.target_phrase = target_phrase
         
  
 class CreateUniqueStmt(object):
@@ -131,23 +158,24 @@ class ModelLoader(object):
     '''
     reserved = (
         'CREATE',
+        'FALSE',
+        'FROM',
+        'INDEX',
         'INSERT',
         'INTO',
-        'VALUES',
-        'TABLE',
-        'ROP',
-        'REF_ID',
-        'FROM',
-        'TO',
-        'PHRASE',
-        'UNIQUE',
-        'INDEX',
         'ON',
+        'PHRASE',
+        'REF_ID',
+        'ROP',
+        'TABLE',
+        'TO',
         'TRUE',
-        'FALSE'
+        'UNIQUE',
+        'VALUES'
     )
 
     tokens = reserved + (
+        'CARDINALITY',
         'COMMA',
         'FRACTION',
         'GUID',
@@ -158,8 +186,7 @@ class ModelLoader(object):
         'RPAREN',
         'RELID',
         'SEMICOLON',
-        'STRING',
-        'CARDINALITY',
+        'STRING'
     )
 
     # A string containing ignored characters (spaces and tabs).
@@ -228,8 +255,18 @@ class ModelLoader(object):
         input.
         '''
         for stmt in self.statements:
-            if isinstance(stmt, CreateRelatationStmt):
-                metamodel.define_relation(stmt.id, *stmt.end_points)
+            if isinstance(stmt, CreateAssociationStmt):
+                metamodel.define_association(stmt.rel_id, 
+                                             stmt.source_kind, 
+                                             stmt.source_keys,
+                                             'M' in stmt.source_cardinality,
+                                             'C' in stmt.source_cardinality,
+                                             stmt.source_phrase,
+                                             stmt.target_kind, 
+                                             stmt.target_keys,
+                                             'M' in stmt.target_cardinality,
+                                             'C' in stmt.target_cardinality,
+                                             stmt.target_phrase)
 
     def populate_unique_identifiers(self, metamodel):
         '''
@@ -261,21 +298,19 @@ class ModelLoader(object):
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using positional arguments.
         '''
-        ukind = stmt.kind.upper()
-                
-        if ukind not in metamodel.classes:
+        if stmt.kind.upper() not in metamodel.metaclasses:
             names = ['_%s' % idx for idx in range(len(stmt.values))]
             ModelLoader._populate_matching_class(metamodel, stmt.kind, 
                                                  names, stmt.values)
             
-        Cls = metamodel.classes[ukind]
+        metaclass = metamodel.find_metaclass(stmt.kind)
         args = list()
             
-        if len(Cls.__a__) != len(stmt.values):
+        if len(metaclass.attributes) != len(stmt.values):
             logger.warn('schema mismatch while loading an instance of %s',
                         stmt.kind)
                 
-        for attr, value in zip(Cls.__a__, stmt.values):
+        for attr, value in zip(metaclass.attributes, stmt.values):
             _, ty = attr
             value = deserialize_value(ty, value) 
             args.append(value)
@@ -288,15 +323,13 @@ class ModelLoader(object):
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using named arguments.
         '''
-        ukind = stmt.kind.upper()
-            
-        if ukind not in metamodel.classes:
+        if stmt.kind.upper() not in metamodel.metaclasses:
             ModelLoader._populate_matching_class(metamodel, stmt.kind, 
                                                  stmt.names, stmt.values)
             
-        Cls = metamodel.classes[ukind]
+        metaclass = metamodel.find_metaclass(stmt.kind)
             
-        schema_unames = [name.upper() for name, _ in Cls.__a__]
+        schema_unames = [name.upper() for name in metaclass.attribute_names]
         inst_unames = [name.upper() for name in stmt.names]
         
         if set(inst_unames) - set(schema_unames):
@@ -304,7 +337,7 @@ class ModelLoader(object):
                         stmt.kind)
             
         args = list()
-        for name, ty in Cls.__a__:
+        for name, ty in metaclass.attributes:
             uname = name.upper()
             if uname in inst_unames:
                 idx = inst_unames.index(uname)
@@ -520,15 +553,18 @@ class ModelLoader(object):
         
     def p_create_rop_statement(self, p):
         '''create_rop_statement : CREATE ROP REF_ID RELID FROM association_end TO association_end'''
-        p[0] = CreateRelatationStmt(p[6], p[8], p[4])
+        args = [p[4]]
+        args.extend(p[6])
+        args.extend(p[8])
+        p[0] = CreateAssociationStmt(*args)
 
     def p_association_end(self, p):
         '''association_end : cardinality identifier LPAREN identifier_sequence RPAREN'''
-        p[0] = xtuml.AssociationLink(p[2], p[1], p[4])
+        p[0] = (p[2], p[1], p[4], '')
 
     def p_phrased_association_end(self, p):
         '''association_end : cardinality identifier LPAREN identifier_sequence RPAREN PHRASE STRING'''
-        p[0] = xtuml.AssociationLink(p[2], p[1], p[4], p[7][1:-1])
+        p[0] = (p[2], p[1], p[4], p[7][1:-1])
 
     def p_cardinality_1(self, p):
         '''cardinality : NUMBER'''

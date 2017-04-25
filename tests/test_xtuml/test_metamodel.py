@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2014-2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 
@@ -7,71 +22,7 @@ import xtuml
 from bridgepoint import ooaofooa
 from xtuml import where_eq as where
 
-from tests.test_xtuml.utils import expect_exception
 
-
-class TestAssociation(unittest.TestCase):
-    '''
-    Test suite for the class xtuml.AssociationLink
-    '''
-    
-    def testAssociationConstructor(self):
-        l1 = xtuml.AssociationLink('CLASS1', '1C', [], 'next')
-        l2 = xtuml.AssociationLink('CLASS1', '1C', [], 'prev')
-        ass = xtuml.Association(1, l1, l2)
-        self.assertEqual(ass.id, 'R1')
-        self.assertTrue(ass.is_reflexive)
-
-        l1 = xtuml.AssociationLink('CLASS1', '1C', [], 'next')
-        l2 = xtuml.AssociationLink('CLASS2', '1C', [], 'prev')
-        ass = xtuml.Association('R2', l1, l2)
-        self.assertEqual(ass.id, 'R2')
-        self.assertFalse(ass.is_reflexive)
-        
-    def testAssociationLinkConstructor(self):
-        l = xtuml.AssociationLink('CLASS', '1', [], 'test')
-        self.assertFalse(l.is_many)
-        self.assertFalse(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', '1C', [], 'test')
-        self.assertFalse(l.is_many)
-        self.assertTrue(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', '1c', [], 'test')
-        self.assertFalse(l.is_many)
-        self.assertTrue(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', 'MC', [], 'test')
-        self.assertTrue(l.is_many)
-        self.assertTrue(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', 'mC', [], 'test')
-        self.assertTrue(l.is_many)
-        self.assertTrue(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', 'Mc', [], 'test')
-        self.assertTrue(l.is_many)
-        self.assertTrue(l.is_conditional)
-
-        l = xtuml.AssociationLink('CLASS', 'mc', [], 'test')
-        self.assertTrue(l.is_many)
-        self.assertTrue(l.is_conditional)
-        
-        
-class TestNavChain(unittest.TestCase):
-    '''
-    Test suite for the class xtuml.NavChain
-    '''
-    
-    def testNavigateNone(self):
-        self.assertIsNone(xtuml.navigate_one(None)())
-        self.assertEqual(len(xtuml.navigate_many(None)()), 0)
-
-    @expect_exception(xtuml.ModelException)
-    def testNavigateInvalidHandle(self):
-        self.assertIsNone(xtuml.navigate_one(50)())
-
-        
 class TestModel(unittest.TestCase):
     '''
     Test suite for the class xtuml.MetaModel
@@ -87,15 +38,15 @@ class TestModel(unittest.TestCase):
     def tearDown(self):
         del self.metamodel
 
-    def testSelectAny(self):
+    def test_select_any(self):
         m = self.metamodel
         self.assertNotEqual(m.select_any('S_DT'), None)
 
-    def testSelectOne(self):
+    def test_select_one(self):
         m = self.metamodel
         self.assertNotEqual(m.select_one('S_DT'), None)
         
-    def testSelectMany(self):
+    def test_select_many(self):
         m = self.metamodel
         q = m.select_many('S_DT')
         self.assertIsInstance(q, xtuml.QuerySet)
@@ -105,36 +56,17 @@ class TestModel(unittest.TestCase):
         self.assertIsInstance(q, xtuml.QuerySet)
         self.assertTrue(len(q) == 0)
         
-    def testSelectAnyWhere(self):
+    def test_select_any_where(self):
         m = self.metamodel
         inst = m.select_any('S_DT', where(Name='void'))
         self.assertEqual(inst.Name, 'void')
         
-    def testNavOne(self):
-        m = self.metamodel
-        s_dt = m.select_any('S_DT',  where(Name='void'))
-        pe_pe = xtuml.navigate_one(s_dt).PE_PE[8001](lambda inst: True)
-        self.assertEqual(s_dt.DT_ID, pe_pe.Element_ID)
-        
-    def testNavMany(self):
-        m = self.metamodel
-        s_dt = m.select_many('S_DT')
-        pe_pe = xtuml.navigate_many(s_dt).PE_PE[8001](lambda inst: True)
-        self.assertEqual(len(s_dt), len(pe_pe))
-   
-    def testNavSubtype(self):
-        m = self.metamodel
-        s_dt = m.select_any('S_DT',  where(Name='void'))
-        s_cdt = xtuml.navigate_subtype(s_dt, 17)
-        self.assertTrue(s_cdt)
-        self.assertEqual(s_cdt.__class__.__name__, 'S_CDT')
-        
-    def testEmpty(self):
+    def test_empty(self):
         m = self.metamodel
         self.assertTrue(len(m.select_many('S_DT', lambda inst: False)) == 0)
         self.assertFalse(len(m.select_many('S_DT')) == 0)
        
-    def testCardinality(self):
+    def test_cardinality(self):
         m = self.metamodel
         
         q = m.select_many('S_DT', lambda inst: False)
@@ -149,7 +81,7 @@ class TestModel(unittest.TestCase):
             
         self.assertEqual(x, len(q))
         
-    def testIsSet(self):
+    def test_is_set(self):
         m = self.metamodel
 
         q = m.select_many('S_DT', lambda inst: False)
@@ -158,13 +90,13 @@ class TestModel(unittest.TestCase):
         q = m.select_many('S_DT')
         self.assertIsInstance(q, xtuml.QuerySet)
                 
-    def testIsInstance(self):
+    def test_is_instance(self):
         m = self.metamodel
         
         q = m.select_any('S_DT')
-        self.assertIsInstance(q, xtuml.BaseObject)
+        self.assertIsInstance(q, xtuml.Class)
 
-    def testQueryOrder(self):
+    def test_query_order(self):
         m = self.metamodel
         q = m.select_many('S_DT')
         
@@ -175,9 +107,9 @@ class TestModel(unittest.TestCase):
             self.assertEqual(index == length - 1, inst == q.last)
             self.assertEqual(index != length - 1, inst != q.last)
 
-    def testCaseSensitivity(self):
-        self.metamodel.define_class('Aa', [])
-        
+    def test_case_sensitivity(self):
+        self.metamodel.define_class('Aa', [('Id', 'unique_id')])
+
         self.metamodel.new('AA')
 
         self.assertTrue(self.metamodel.select_any('aA'))
@@ -194,50 +126,62 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(self.metamodel.select_many('Aa')), 4)
         self.assertEqual(len(self.metamodel.select_many('aa')), 4)
         
-    @expect_exception(xtuml.ModelException)
-    def testUnknownType(self):
+        metaclass = self.metamodel.find_metaclass('aa')
+        metaclass.append_attribute('Next_Id', 'unique_id')
+        
+        self.metamodel.define_association(rel_id='R1', 
+                                          source_kind='AA', 
+                                          source_keys=['ID'], 
+                                          source_many=False, 
+                                          source_conditional=False,
+                                          source_phrase='prev',
+                                          target_kind='aa',
+                                          target_keys=['next_id'],
+                                          target_many=False,
+                                          target_conditional=False,
+                                          target_phrase='next')
+                                          
+        next_id = None
+        for inst in self.metamodel.select_many('aa'):
+            inst.next_ID = next_id
+            next_id = inst.Id
+            
+        self.assertTrue(xtuml.navigate_one(inst).aa[1, 'prev'].AA[1, 'prev']())
+        
+    def test_unknown_type(self):
         self.metamodel.define_class('A', [('Id', '<invalid type>')])
-        self.metamodel.new('A')
+        self.assertRaises(xtuml.MetaException, self.metamodel.new, 'A')
         
-    @expect_exception(xtuml.ModelException)
-    def testUndefinedClass(self):
-        self.metamodel.new('MY_UNDEFINED_CLASS')
+    def test_undefined_class(self):
+        self.assertRaises(xtuml.UnknownClassException, self.metamodel.new, 
+                          'MY_UNDEFINED_CLASS')
 
-    @expect_exception(xtuml.ModelException)
-    def testRedefinedClass1(self):
+    def test_redefined_class(self):
         self.metamodel.define_class('MY_CLASS', [])
-        self.metamodel.define_class('MY_CLASS', [])
+        self.assertRaises(xtuml.MetaModelException, self.metamodel.define_class, 
+                          'MY_CLASS', [])
 
-    @expect_exception(xtuml.ModelException)
-    def testSelectAnyUndefined(self):
-        self.metamodel.select_any('MY_CLASS')
+    def test_select_any_undefined(self):
+        self.assertRaises(xtuml.UnknownClassException, self.metamodel.select_any,
+                          'MY_CLASS')
 
-    @expect_exception(xtuml.ModelException)
-    def testSelectManyUndefined(self):
-        self.metamodel.select_many('MY_CLASS')
+    def test_select_many_undefined(self):
+        self.assertRaises(xtuml.UnknownClassException, self.metamodel.select_many,
+                          'MY_CLASS')
         
-    def testRelate(self):
-        s_edt = self.metamodel.new('S_EDT')
-        s_dt = self.metamodel.new('S_DT')
-        pe_pe = self.metamodel.new('PE_PE')
-        self.assertTrue(xtuml.relate(s_dt, pe_pe, 8001))
-        self.assertTrue(xtuml.relate(s_dt, s_edt, 17))
-        self.assertEqual(s_edt, xtuml.navigate_one(s_dt).S_EDT[17]())
-
-    def testDelete(self):
+    def test_delete(self):
         inst = self.metamodel.select_any('S_DT', where(Name='void'))
         xtuml.delete(inst)
         
         inst = self.metamodel.select_any('S_DT', where(Name='void'))
         self.assertFalse(inst)
     
-    @expect_exception(xtuml.ModelException)
-    def testDeleteRwise(self):
+    def test_delete_twise(self):
         inst = self.metamodel.select_any('S_DT', where(Name='void'))
         xtuml.delete(inst)
-        xtuml.delete(inst)
+        self.assertRaises(xtuml.DeleteException, xtuml.delete, inst)
 
-    def testClone(self):
+    def test_clone(self):
         s_ee = self.metamodel.new('S_EE', Name='Test', Descrip='test', Key_Lett='TEST')
         pe_pe = self.metamodel.new('PE_PE')
         self.assertTrue(xtuml.relate(s_ee, pe_pe, 8001))
@@ -253,7 +197,6 @@ class TestModel(unittest.TestCase):
         self.assertEqual(s_ee_clone.Descrip, s_ee.Descrip)
         self.assertEqual(s_ee_clone.Key_Lett, s_ee.Key_Lett)
         
-
         pe_pe_clone = xtuml.navigate_one(s_ee_clone).PE_PE[8001]()
         self.assertTrue(pe_pe_clone)
         self.assertNotEqual(pe_pe, pe_pe_clone)
@@ -262,201 +205,9 @@ class TestModel(unittest.TestCase):
         self.assertEqual(pe_pe_clone.Package_ID, pe_pe.Package_ID)
         self.assertEqual(pe_pe_clone.Component_ID, pe_pe.Component_ID)
         self.assertEqual(pe_pe_clone.type, pe_pe.type)
-        
-    @expect_exception(xtuml.ModelException)
-    def testDeleteUnknownInstance(self):
-        xtuml.delete(self)
-        
-    def testRelateReflexive1(self):
-        inst1 = self.metamodel.new('ACT_SMT')
-        inst2 = self.metamodel.new('ACT_SMT')
-        act_blk = self.metamodel.new('ACT_BLK')
-
-        self.assertTrue(xtuml.relate(inst1, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst2, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'precedes'))
-        self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
-        self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
-        
-    def testSortReflexive(self):
-        act_blk = self.metamodel.new('ACT_BLK')
-        
-        prev = None
-        for idx in range(10):
-            inst = self.metamodel.new('ACT_SMT', LineNumber=idx)
-            self.assertTrue(xtuml.relate(inst, act_blk, 602))
-            xtuml.relate(prev, inst, 661, 'precedes')
-            prev = inst
-            
-        inst_set = xtuml.navigate_many(act_blk).ACT_SMT[602]()
-        inst_set = xtuml.sort_reflexive(inst_set, 661, 'precedes')
-        self.assertEqual(len(inst_set), 10)
-        for idx, inst in enumerate(inst_set):
-            self.assertEqual(inst.LineNumber, idx)
-        
-        inst_set = xtuml.navigate_many(act_blk).ACT_SMT[602]()
-        inst_set = xtuml.sort_reflexive(inst_set, 661, 'succeeds')
-        self.assertEqual(len(inst_set), 10)
-        for idx, inst in enumerate(inst_set):
-            self.assertEqual(inst.LineNumber, 9 - idx)
-
-    def testSortReflexiveNone(self):
-        inst_set = xtuml.sort_reflexive(None, None, None)
-        self.assertEqual(len(inst_set), 0)
     
-    @expect_exception(xtuml.ModelException)
-    def testSortReflexiveWithRecursion(self):
-        act_blk = self.metamodel.new('ACT_BLK')
-        first = self.metamodel.new('ACT_SMT')
-        act_smt = self.metamodel.new('ACT_SMT')
-        self.assertTrue(xtuml.relate(act_blk, first, 602))
-        self.assertTrue(xtuml.relate(first, act_smt, 661, 'succeeds'))
-        self.assertTrue(xtuml.relate(act_smt, act_smt, 661, 'succeeds'))
-        
-        inst_set = xtuml.navigate_many(act_blk).ACT_SMT[602]()
-        self.assertEqual(len(inst_set), 1)
-        xtuml.sort_reflexive(inst_set, 661, 'precedes')
-        
-    def testRelateReflexive2(self):
-        inst1 = self.metamodel.new('ACT_SMT')
-        inst2 = self.metamodel.new('ACT_SMT')
-        act_blk = self.metamodel.new('ACT_BLK')
-
-        self.assertTrue(xtuml.relate(inst1, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst2, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst2, inst1, 661, 'succeeds'))
-        self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
-        self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
-        
-    @expect_exception(xtuml.ModelException)
-    def testRelateReflexiveWithoutPhrase(self):
-        inst1 = self.metamodel.new('ACT_SMT')
-        inst2 = self.metamodel.new('ACT_SMT')
-        
-        xtuml.relate(inst1, inst2, 661, '<invalid phrase>')
-        
-    def testRelateInvertedOrder(self):
-        s_edt = self.metamodel.new('S_EDT')
-        s_dt = self.metamodel.new('S_DT')
-        pe_pe = self.metamodel.new('PE_PE')
-        self.assertTrue(xtuml.relate(pe_pe, s_dt, 8001))
-        self.assertTrue(xtuml.relate(s_edt, s_dt, 17))
-        self.assertEqual(s_edt, xtuml.navigate_one(s_dt).S_EDT[17]())
-    
-    @expect_exception(xtuml.ModelException)
-    def testRelateInvalidRelId(self):
-        s_edt = self.metamodel.new('S_EDT')
-        s_dt = self.metamodel.new('S_DT')
-        xtuml.relate(s_edt, s_dt, 0)
-        self.assertEqual(s_edt, xtuml.navigate_one(s_dt).S_EDT[17]())
-        
-    def testUnrelate(self):
-        inst1 = self.metamodel.new('ACT_SMT')
-        inst2 = self.metamodel.new('ACT_SMT')
-        act_blk = self.metamodel.new('ACT_BLK')
-
-        self.assertTrue(xtuml.relate(inst1, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst2, act_blk, 602))
-        
-        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'precedes'))
-        self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
-        self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
-        
-        self.assertTrue(xtuml.unrelate(inst1, inst2, 661, 'precedes'))
-        self.assertIsNone(xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
-        self.assertIsNone(xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
-            
-    def testRelateInWrongOrder(self):
-        s_ee = self.metamodel.new('S_EE')
-        pe_pe = self.metamodel.new('PE_PE')
-        EE_ID = s_ee.EE_ID
-        Element_ID = pe_pe.Element_ID
-        self.assertTrue(xtuml.relate(s_ee, pe_pe, 8001))
-        self.assertNotEqual(EE_ID, s_ee.EE_ID)
-        self.assertEqual(Element_ID, pe_pe.Element_ID)
-
-    def testRelateTopDown(self):
-        m = self.metamodel
-        s_dt = m.select_one('S_DT', where(Name='string'))
-        s_bparm = m.new('S_BPARM', Name='My_Parameter')
-        s_ee = m.new('S_EE', Name='My_External_Entity', Key_Lett='My_External_Entity')
-        pe_pe = m.new('PE_PE', Visibility=True, type=5)
-        s_brg = m.new('S_BRG', Name='My_Bridge_Operation')
-
-        self.assertTrue(xtuml.relate(s_ee, pe_pe, 8001))
-        self.assertTrue(xtuml.relate(s_brg, s_ee, 19))
-        self.assertTrue(xtuml.relate(s_brg, s_dt, 20))
-        self.assertTrue(xtuml.relate(s_bparm, s_brg, 21))
-        self.assertTrue(xtuml.relate(s_bparm, s_dt, 22))
-            
-        inst = xtuml.navigate_any(pe_pe).S_EE[8001].S_BRG[19].S_BPARM[21]()
-        self.assertEqual(inst, s_bparm)
-        
-    def testRelateBottomUp(self):
-        m = self.metamodel
-        s_dt = m.select_one('S_DT', where(Name='string'))
-        s_bparm = m.new('S_BPARM', Name='My_Parameter')
-        s_ee = m.new('S_EE', Name='My_External_Entity', Key_Lett='My_External_Entity')
-        pe_pe = m.new('PE_PE', Visibility=True, type=5)
-        s_brg = m.new('S_BRG', Name='My_Bridge_Operation')
-        
-        self.assertTrue(xtuml.relate(s_bparm, s_dt, 22))
-        self.assertTrue(xtuml.relate(s_bparm, s_brg, 21))
-        self.assertTrue(xtuml.relate(s_brg, s_dt, 20))
-        self.assertTrue(xtuml.relate(s_ee, pe_pe, 8001))
-        self.assertTrue(xtuml.relate(s_brg, s_ee, 19))
-        
-        inst = xtuml.navigate_any(pe_pe).S_EE[8001].S_BRG[19].S_BPARM[21]()
-        self.assertEqual(inst, s_bparm)
-    
-    def testConcistencyOfEmptyModel(self):
-        self.assertTrue(self.metamodel.is_consistent())
-    
-    def testConsistencyOfNonEmptyModel(self):
-        m = self.metamodel
-        s_dt = m.select_one('S_DT', where(Name='string'))
-        s_bparm = m.new('S_BPARM', Name='My_Parameter')
-        s_ee = m.new('S_EE', Name='My_External_Entity', Key_Lett='My_External_Entity')
-        pe_pe = m.new('PE_PE', Visibility=True, type=5)
-        s_brg = m.new('S_BRG', Name='My_Bridge_Operation')
-        
-        
-        self.assertFalse(xtuml.check_association_integrity(m, 22))
-        self.assertTrue(xtuml.relate(s_bparm, s_dt, 22))
-        self.assertTrue(xtuml.check_association_integrity(m, 22))
-        
-        self.assertFalse(xtuml.check_association_integrity(m, 21))
-        self.assertTrue(xtuml.relate(s_bparm, s_brg, 21))
-        self.assertTrue(xtuml.check_association_integrity(m, 21))
-        
-        self.assertFalse(xtuml.check_association_integrity(m, 20))
-        self.assertTrue(xtuml.relate(s_brg, s_dt, 20))
-        self.assertTrue(xtuml.check_association_integrity(m, 20))
-        
-        self.assertFalse(xtuml.check_association_integrity(m, 8001))
-        self.assertTrue(xtuml.relate(s_ee, pe_pe, 8001))
-        self.assertTrue(xtuml.check_association_integrity(m, 8001))
-        
-        self.assertFalse(xtuml.check_association_integrity(m, 19))
-        self.assertTrue(xtuml.relate(s_brg, s_ee, 19))
-        self.assertTrue(xtuml.check_association_integrity(m, 19))
-        
-        # the old, unused association R8 is still present in ooaofooa, and thus
-        # consistency check fails on S_EE.
-        #self.assertTrue(m.is_consistent())
-        
-    def test_uniqueness_constraint(self):
-        m = self.metamodel
-        self.assertTrue(m.is_consistent())
-        
-        s_dt = m.select_one('S_DT', where(Name='string'))
-        m.clone(s_dt)
-        
-        self.assertFalse(m.is_consistent())
-        self.assertTrue(xtuml.check_uniqueness_constraint(m, 'PE_PE'))
-        
-        xtuml.delete(s_dt)
-        self.assertTrue(m.is_consistent())
+    def test_delete_unknown_instance(self):
+        self.assertRaises(xtuml.DeleteException, xtuml.delete, self)
 
 
 class TestDefineAssociations(unittest.TestCase):
@@ -470,14 +221,22 @@ class TestDefineAssociations(unittest.TestCase):
     def tearDown(self):
         del self.metamodel
 
-    def testReflexive(self):
+    def test_reflexive(self):
         self.metamodel.define_class('A', [('Id', 'unique_id'),
                                           ('Next_Id', 'unique_id'),
                                           ('Name', 'string')])
         
-        endpint1 = xtuml.SingleAssociationLink('A', ids=['Id'], phrase='prev')
-        endpint2 = xtuml.SingleAssociationLink('A', ids=['Next_Id'], phrase='next')
-        self.metamodel.define_relation('R1', endpint1, endpint2)
+        self.metamodel.define_association(rel_id='R1', 
+                                          source_kind='A', 
+                                          source_keys=['Id'], 
+                                          source_many=False, 
+                                          source_conditional=False,
+                                          source_phrase='prev',
+                                          target_kind='A',
+                                          target_keys=['Next_Id'],
+                                          target_many=False,
+                                          target_conditional=False,
+                                          target_phrase='next')
         
         first = self.metamodel.new('A', Name="First")
         second = self.metamodel.new('A', Name="Second")
@@ -496,13 +255,20 @@ class TestDefineAssociations(unittest.TestCase):
         inst = xtuml.navigate_one(second).A[1, 'next']()
         self.assertIsNone(inst)
 
-    def testOneToMany(self):
+    def test_one_to_many(self):
         self.metamodel.define_class('A', [('Id', 'unique_id')])
         self.metamodel.define_class('B', [('Id', 'unique_id'), ('A_Id', 'unique_id')])
-        a_endpint = xtuml.SingleAssociationLink('A', ids=['Id'])
-        b_endpint = xtuml.ManyAssociationLink('B', ids=['A_Id'])
-        
-        self.metamodel.define_relation(1, a_endpint, b_endpint)
+        self.metamodel.define_association(rel_id=1, 
+                                          source_kind='A', 
+                                          source_keys=['Id'], 
+                                          source_many=False, 
+                                          source_conditional=False,
+                                          source_phrase='',
+                                          target_kind='B',
+                                          target_keys=['A_Id'],
+                                          target_many=True,
+                                          target_conditional=False,
+                                          target_phrase='')
         
         a = self.metamodel.new('A')
         b = self.metamodel.new('B')
@@ -511,31 +277,32 @@ class TestDefineAssociations(unittest.TestCase):
         self.assertEqual(a, xtuml.navigate_one(b).A[1]())
 
 
-class TestBaseObject(unittest.TestCase):
+class TestClass(unittest.TestCase):
     '''
-    Test suite for the class xtuml.BaseObject
+    Test suite for the class xtuml.Class
     '''
-    
-    def testPlusOperator(self):
-        inst1 = xtuml.BaseObject()
-        inst2 = xtuml.BaseObject()
+    My_Class = xtuml.MetaClass('My_Class')
+
+    def test_plus_operator(self):
+        inst1 = self.My_Class()
+        inst2 = self.My_Class()
 
         q = inst1 + inst2
         self.assertEqual(2, len(q))
         self.assertIn(inst1, q)
         self.assertIn(inst2, q)
         
-    def testMinusOperator(self):
-        inst1 = xtuml.BaseObject()
-        inst2 = xtuml.BaseObject()
+    def test_minus_operator(self):
+        inst1 = self.My_Class()
+        inst2 = self.My_Class()
 
         q = inst1 - inst2
         self.assertEqual(1, len(q))
         self.assertIn(inst1, q)
         self.assertNotIn(inst2, q)
         
-    def testNonPersistingAttribute(self):
-        inst = xtuml.BaseObject()
+    def test_non_persisting_attribute(self):
+        inst = self.My_Class()
         
         setattr(inst, 'test1', 1)
         self.assertEqual(getattr(inst, 'test1'), 1)
@@ -549,99 +316,80 @@ class TestBaseObject(unittest.TestCase):
         self.assertEqual(getattr(inst, 'test3'), 3)
         self.assertEqual(inst.test3, 3)
         
-    @expect_exception(AttributeError)
-    def testUndefinedAttribute1(self):
-        inst = xtuml.BaseObject()
-        _ = getattr(inst, 'test')
+    def test_gettattr_with_undefined_attribute(self):
+        inst = self.My_Class()
+        self.assertRaises(AttributeError, getattr, inst, 'test')
         
+    def test_undefined_attribute_access(self):
+        inst = self.My_Class()
+        try:
+            _ = inst.test
+            self.fail('AttributeError expected')
+        except AttributeError:
+            pass
+
+
+class TestMetaClass(unittest.TestCase):
+    '''
+    Test suite for xtuml.MetaClass
+    '''
+    
+    def setUp(self):
+        self.metaclass = xtuml.MetaClass('Test')
         
-    @expect_exception(AttributeError)
-    def testUndefinedAttribute2(self):
-        inst = xtuml.BaseObject()
-        _ = inst.test
+    def test_default_value(self):
+        self.assertEqual(self.metaclass.default_value('integer'), 0)
+        self.assertEqual(self.metaclass.default_value('Integer'), 0)
+        self.assertEqual(self.metaclass.default_value('real'), 0.0)
+        self.assertEqual(self.metaclass.default_value('STRING'), '')
+        self.assertEqual(self.metaclass.default_value('unique_id'), None)
+        self.assertEqual(self.metaclass.default_value('boolean'), False)
+    
+    def test_modifying_attributes(self):
+        self.metaclass.append_attribute('number', 'integer')
+        self.metaclass.append_attribute('name', 'string')
+        self.metaclass.insert_attribute(1, 'email', 'string')
+    
+        inst1 = self.metaclass(number=2, name='test', email='test@test.com')
+        self.assertEqual(inst1.number, 2)
+        self.assertEqual(inst1.name, 'test')
+        self.assertEqual(inst1.email, 'test@test.com')
+    
+        for expected_name, name in zip(['number', 'email', 'name'], 
+                                       self.metaclass.attribute_names):
+            self.assertEqual(expected_name, name)
+    
+        self.metaclass.delete_attribute('name')
+        self.assertNotIn('name', self.metaclass.attribute_names)
+        
+        self.assertEqual(inst1.number, 2)
+        self.assertEqual(inst1.name, 'test')
         
         
 class TestQuerySet(unittest.TestCase):
     '''
     Test suite for the class xtuml.QuerySet
     '''
-    
-    def testEqualOperator(self):
-        q1 = xtuml.QuerySet()
-        q2 = xtuml.QuerySet()
+    def test_first(self):
+        q = xtuml.QuerySet([1, 2, 3])
+        self.assertEqual(q.first, 1)
         
-        self.assertEqual(q1, q2)
-        
-        q1 = xtuml.QuerySet([1])
-        q2 = xtuml.QuerySet([1])
-        
-        self.assertEqual(q1, q2)
-        
-        q1 = xtuml.QuerySet([1, 2, 3])
-        q2 = xtuml.QuerySet([1, 2, 3])
-        
-        self.assertEqual(q1, q2)
-        self.assertEqual(q1, [1, 2, 3])
-        
-    def testNotEqualOperator(self):
-        q1 = xtuml.QuerySet()
-        q2 = xtuml.QuerySet([1])
-        self.assertNotEqual(q1, q2)
-        self.assertNotEqual(q2, q1)
-        
-        q1 = xtuml.QuerySet([1, 2, 3])
-        q2 = xtuml.QuerySet([1, 3])
-        self.assertNotEqual(q1, q2)
-        self.assertNotEqual(q2, q1)
-        
-        q1 = xtuml.QuerySet([1, 2, 3])
-        q2 = xtuml.QuerySet([1, 3, 2])
-        self.assertNotEqual(q1, q2)
-        
-    @expect_exception(KeyError)
-    def testPopEmpty(self):
         q = xtuml.QuerySet()
-        q.pop()
-
-    def testPopLast(self):
-        q1 = xtuml.QuerySet([1, 2])
-        q2 = xtuml.QuerySet([1])
-        self.assertNotEqual(q1, q2)
-
-        q1.pop()
-        self.assertEqual(q1, q2)
+        self.assertIsNone(q.first)
         
-    def testPopFirst(self):
-        q1 = xtuml.QuerySet([2, 1])
-        q2 = xtuml.QuerySet([1])
-        self.assertNotEqual(q1, q2)
-
-        q1.pop(last=False)
-        self.assertEqual(q1, q2)
-
-class TestIdGenerator(unittest.TestCase):
-    '''
-    Test suite for the IdGenerator classes
-    '''
-
-    def testIntegerGeneratorBasic(self):
-        i = xtuml.IntegerGenerator()
-        self.assertEqual(i.peek(), 1)
-        self.assertEqual(i.next(), 1)
-        self.assertEqual(i.next(), 2)
-        self.assertEqual(i.peek(), 3)
-        self.assertEqual(i.peek(), 3)
-
-    def testIntegerGeneratorIterator(self):
-        i = xtuml.IntegerGenerator()
-        count = 1
-        for v in i:
-            self.assertEqual(v, count)
-            count += 1
-            if count == 10:
-                break
-
-
+    def test_last(self):
+        q = xtuml.QuerySet([1, 2, 3])
+        self.assertEqual(q.last, 3)
+        
+        q = xtuml.QuerySet()
+        self.assertIsNone(q.last)
+        
+    def test_one_item(self):
+        q = xtuml.QuerySet([2])
+        self.assertEqual(q.first, 2)
+        self.assertEqual(q.last, 2)
+        
+        
 if __name__ == "__main__":
     unittest.main()
 

@@ -1,9 +1,25 @@
 # encoding: utf-8
-# Copyright (C) 2014-2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 import os
 import tempfile
+import atexit
 
 import xtuml
     
@@ -108,7 +124,7 @@ class TestPersist(unittest.TestCase):
             with open(filename) as f:
                 self.assertEqual(s, f.read())
         finally:
-            os.remove(filename)
+            atexit.register(os.remove, filename)
         
         loader = xtuml.ModelLoader()
         loader.input(schema)
@@ -145,7 +161,7 @@ class TestPersist(unittest.TestCase):
             with open(filename) as f:
                 self.assertEqual(s, f.read())
         finally:
-            os.remove(filename)
+            atexit.register(os.remove, filename)
 
     def test_persist_database(self):
         schema = '''
@@ -172,7 +188,7 @@ class TestPersist(unittest.TestCase):
             with open(filename) as f:
                 self.assertEqual(s, f.read())
         finally:
-            os.remove(filename)
+            atexit.register(os.remove, filename)
 
     def test_serialize_schema(self):
         schema = '''
@@ -344,7 +360,7 @@ class TestPersist(unittest.TestCase):
         loader.input(schema)
         m = loader.build_metamodel()
         
-        X = m.classes['X']
+        X = m.find_class('X')
         s1 = xtuml.serialize(X)
         s2 = xtuml.serialize_class(X)
         self.assertTrue(s1)
@@ -355,12 +371,7 @@ class TestPersist(unittest.TestCase):
         s2 = xtuml.serialize_association(R1)
         self.assertTrue(s1)
         self.assertEqual(s1, s2)
-        
-        s1 = xtuml.serialize(R1.source)
-        s2 = xtuml.persist.serialize_association_link(R1.source)
-        self.assertTrue(s1)
-        self.assertEqual(s1, s2)
-        
+
         x = m.new('X', Boolean=True, Integer=4, String='str')
         
         s1 = xtuml.serialize(x)
@@ -379,26 +390,26 @@ def compare_metamodel_classes(m1, m2):
     Helper function for detecting differences in class definitions 
     in two metamodels.
     '''
-    if len(m1.classes.keys()) != len(m2.classes.keys()):
+    if len(m1.metaclasses.keys()) != len(m2.metaclasses.keys()):
         return False
     
-    for kind in m1.classes.keys():
-        Cls1 = m1.classes[kind]
-        Cls2 = m2.classes[kind]
+    for kind in m1.metaclasses.keys():
+        metaclass1 = m1.metaclasses[kind]
+        metaclass2 = m2.metaclasses[kind]
         
-        if Cls1.__name__ != Cls2.__name__:
+        if metaclass1.kind != metaclass2.kind:
             return False
         
-        if Cls1.__a__ != Cls2.__a__:
+        if metaclass1.attributes != metaclass2.attributes:
             return False
 
-        if Cls1.__i__ != Cls2.__i__:
+        if metaclass1.identifying_attributes != metaclass2.identifying_attributes:
             return False
 
-        if Cls1.__d__ != Cls2.__d__:
+        if metaclass1.referential_attributes != metaclass2.referential_attributes:
             return False
 
-        if Cls1.__u__ != Cls2.__u__:
+        if metaclass1.indices != metaclass2.indices:
             return False
         
     return True
