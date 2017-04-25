@@ -306,9 +306,9 @@ class ModelLoader(object):
         metaclass = metamodel.find_metaclass(stmt.kind)
         args = list()
             
-        if len(metaclass.attributes) != len(stmt.values):
-            logger.warn('schema mismatch while loading an instance of %s',
-                        stmt.kind)
+        #if len(metaclass.attributes) != len(stmt.values):
+        #    logger.warn('schema mismatch while loading an instance of %s',
+        #                stmt.kind)
                 
         for attr, value in zip(metaclass.attributes, stmt.values):
             _, ty = attr
@@ -332,9 +332,9 @@ class ModelLoader(object):
         schema_unames = [name.upper() for name in metaclass.attribute_names]
         inst_unames = [name.upper() for name in stmt.names]
         
-        if set(inst_unames) - set(schema_unames):
-            logger.warn('schema mismatch while loading an instance of %s',
-                        stmt.kind)
+        #if set(inst_unames) - set(schema_unames):
+        #    logger.warn('schema mismatch while loading an instance of %s',
+        #                stmt.kind)
             
         args = list()
         for name, ty in metaclass.attributes:
