@@ -129,22 +129,24 @@ class TestModel(unittest.TestCase):
         metaclass = self.metamodel.find_metaclass('aa')
         metaclass.append_attribute('Next_Id', 'unique_id')
         
-        self.metamodel.define_association(rel_id='R1', 
-                                          source_kind='AA', 
-                                          source_keys=['ID'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='prev',
-                                          target_kind='aa',
-                                          target_keys=['next_id'],
-                                          target_many=False,
-                                          target_conditional=False,
-                                          target_phrase='next')
-                                          
+        ass = self.metamodel.define_association(rel_id='R1', 
+                                                source_kind='AA', 
+                                                source_keys=['ID'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='prev',
+                                                target_kind='aa',
+                                                target_keys=['next_id'],
+                                                target_many=False,
+                                                target_conditional=False,
+                                                target_phrase='next')
         next_id = None
         for inst in self.metamodel.select_many('aa'):
             inst.next_ID = next_id
             next_id = inst.Id
+        
+        ass.batch_relate()
+        ass.formalize()
             
         self.assertTrue(xtuml.navigate_one(inst).aa[1, 'prev'].AA[1, 'prev']())
         
@@ -226,17 +228,18 @@ class TestDefineAssociations(unittest.TestCase):
                                           ('Next_Id', 'unique_id'),
                                           ('Name', 'string')])
         
-        self.metamodel.define_association(rel_id='R1', 
-                                          source_kind='A', 
-                                          source_keys=['Id'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='prev',
-                                          target_kind='A',
-                                          target_keys=['Next_Id'],
-                                          target_many=False,
-                                          target_conditional=False,
-                                          target_phrase='next')
+        ass = self.metamodel.define_association(rel_id='R1', 
+                                                source_kind='A', 
+                                                source_keys=['Id'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='prev',
+                                                target_kind='A',
+                                                target_keys=['Next_Id'],
+                                                target_many=False,
+                                                target_conditional=False,
+                                                target_phrase='next')
+        ass.formalize()
         
         first = self.metamodel.new('A', Name="First")
         second = self.metamodel.new('A', Name="Second")
@@ -258,18 +261,19 @@ class TestDefineAssociations(unittest.TestCase):
     def test_one_to_many(self):
         self.metamodel.define_class('A', [('Id', 'unique_id')])
         self.metamodel.define_class('B', [('Id', 'unique_id'), ('A_Id', 'unique_id')])
-        self.metamodel.define_association(rel_id=1, 
-                                          source_kind='A', 
-                                          source_keys=['Id'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='',
-                                          target_kind='B',
-                                          target_keys=['A_Id'],
-                                          target_many=True,
-                                          target_conditional=False,
-                                          target_phrase='')
         
+        ass = self.metamodel.define_association(rel_id=1, 
+                                                source_kind='A', 
+                                                source_keys=['Id'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='',
+                                                target_kind='B',
+                                                target_keys=['A_Id'],
+                                                target_many=True,
+                                                target_conditional=False,
+                                                target_phrase='')
+        ass.formalize()
         a = self.metamodel.new('A')
         b = self.metamodel.new('B')
         self.assertTrue(xtuml.relate(a, b, 1))

@@ -171,8 +171,8 @@ def check_association_integrity(m, rel_id=None):
     res = 0
     for ass in m.associations:
         if rel_id in [ass.rel_id, None]:
-            res += check_link_integrity(m, ass.link)
-            res += check_link_integrity(m, ass.reversed_link)
+            res += check_link_integrity(m, ass.source_link)
+            res += check_link_integrity(m, ass.target_link)
 
     return res
 

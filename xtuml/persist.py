@@ -96,24 +96,23 @@ def serialize_association(ass):
     '''
     Serialize an xtuml metamodel association.
     '''
-    s1 = '%s %s (%s)' % (ass.link.cardinality,
-                         ass.link.to_metaclass.kind,
-                         ', '.join(ass.link.key_map.values()))
+    s1 = '%s %s (%s)' % (ass.source_link.cardinality,
+                         ass.source_link.to_metaclass.kind,
+                         ', '.join(ass.source_keys))
 
-    if ass.link.phrase:
-        s1 += " PHRASE '%s'" % ass.link.phrase
+    if ass.source_link.phrase:
+        s1 += " PHRASE '%s'" % ass.source_link.phrase
 
-    s2 = '%s %s (%s)' % (ass.reversed_link.cardinality,
-                         ass.reversed_link.to_metaclass.kind,
-                         ', '.join(ass.link.key_map.keys()))
+    s2 = '%s %s (%s)' % (ass.target_link.cardinality,
+                         ass.target_link.to_metaclass.kind,
+                         ', '.join(ass.target_keys))
     
-    if ass.reversed_link.phrase:
-        s2 += " PHRASE '%s'" % ass.reversed_link.phrase
-
+    if ass.target_link.phrase:
+        s2 += " PHRASE '%s'" % ass.target_link.phrase
 
     return 'CREATE ROP REF_ID %s FROM %s TO %s;\n' % (ass.rel_id,
-                                                      s2,
-                                                      s1)
+                                                      s1,
+                                                      s2)
 
 
 def serialize_class(Cls):

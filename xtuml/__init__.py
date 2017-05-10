@@ -37,6 +37,7 @@ from .load import ModelLoader
 from .persist import persist_database
 from .persist import persist_instances
 from .persist import persist_schema
+from .persist import persist_unique_identifiers
 
 from .persist import serialize_database
 from .persist import serialize_schema
@@ -50,7 +51,6 @@ from .persist import serialize
 
 from xtuml.meta import Association
 from xtuml.meta import Link
-from xtuml.meta import ReversedLink
 
 from xtuml.meta import QuerySet
 from xtuml.meta import Class

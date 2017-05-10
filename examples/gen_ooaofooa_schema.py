@@ -23,6 +23,12 @@ import re
 import xtuml
 
 from xtuml import navigate_many as many
+from xtuml import navigate_one as one
+from xtuml import navigate_subtype as subtype
+from xtuml import relate
+from xtuml import unrelate
+from xtuml import where_eq as where
+
 from bridgepoint import ooaofooa
 
 
@@ -39,8 +45,8 @@ def parse_keyword(expr, keyword):
         return ''
 
     
-def o_attr_filter(o_attr):
-    description = o_attr.Descrip.lower()
+def description_filter(inst):
+    description = inst.Descrip.lower()
     keymap = dict(persistent='false',
                   translate_for_external_use='false')
                   
@@ -59,18 +65,46 @@ def main():
         loader.filename_input(filename)
     
     m = loader.build_metamodel()
-    c = loader.build_component(derived_attributes=True)
+
+    for r_rel in m.select_many('R_REL', description_filter):
+        logger.info('Filtering R%d' % r_rel.Numb)
+        xtuml.delete(r_rel)
+
+    for o_obj in m.select_many('O_OBJ', description_filter):
+        logger.info('Filtering %s' % o_obj.Key_Lett)
+        for r_rel in many(o_obj).R_OIR[201].R_REL[201]():
+            logger.info('Filtering R%d' % r_rel.Numb)
+            for r_oir in many(r_rel).R_OIR[201]():
+                xtuml.unrelate(r_rel, r_oir, 201)
+                
+            xtuml.delete(r_rel)
+            
+        xtuml.delete(o_obj)
+
+    for o_attr in m.select_many('O_ATTR', where(Name='SMspd_ID')):
+        if not one(o_attr).O_RATTR[106]():
+            continue
+            
+        for o_oida in many(o_attr).O_OIDA[105]():
+            for o_rtida in many(o_oida).O_RTIDA[110]():
+                xtuml.delete(o_rtida)
+            xtuml.delete(o_oida)
+
+        for o_ref in many(o_attr).O_RATTR[106].O_REF[108]():
+            xtuml.delete(o_ref)
+            
+    c = ooaofooa.mk_component(m, None, derived_attributes=True)
+    metaclass = c.find_metaclass('ACT_ACT')
+    metaclass.insert_attribute(index=5, name='return_value', type_name='INTEGER')
 
     for o_obj in m.select_many('O_OBJ'):
-        for o_attr in many(o_obj).O_ATTR[102](o_attr_filter):
+        for o_attr in many(o_obj).O_ATTR[102](description_filter):
             logger.info('Filtering %s.%s' % (o_obj.Key_Lett, o_attr.Name))
             metaclass = c.find_metaclass(o_obj.Key_Lett)
             metaclass.delete_attribute(o_attr.Name)
-        if o_obj.Key_Lett == 'ACT_ACT':
-            metaclass.insert_attribute(index=5, name='return_value', type_name='INTEGER')
             
     xtuml.persist_schema(c, '/dev/stdout')
-
+    #xtuml.persist.persist_unique_identifiers(c, '/dev/stdout')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

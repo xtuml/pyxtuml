@@ -370,7 +370,7 @@ class TestLoader(unittest.TestCase):
         CREATE TABLE X (VAR SOME_TYPE);
         INSERT INTO X VALUES ('test');
         '''
-        self.assertIsInstance(m, xtuml.ParsingException)
+        self.assertIsInstance(m, xtuml.MetaException)
 
     @load_docstring
     def test_insert_with_undefined_table_and_argument(self, m):

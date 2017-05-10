@@ -1360,17 +1360,17 @@ class ActionPrebuilder(xtuml.tools.Walker):
                          Statement_ID=act_smt.Statement_ID,
                          RequiredOp_Id=spr_ro.Id)
     
-            if spr_po:
+            elif spr_po:
                 self.new('ACT_IOP',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedOp_Id=spr_po.Id)
     
-            if spr_rs:
+            elif spr_rs:
                 self.new('ACT_SGN',
                          Statement_ID=act_smt.Statement_ID,
                          RequiredSig_Id=spr_rs.Id)
             
-            if spr_ps:
+            elif spr_ps:
                 self.new('ACT_IOP',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedSig_Id=spr_ps.Id)
@@ -1414,11 +1414,11 @@ class ActionPrebuilder(xtuml.tools.Walker):
     
     def accept_ParameterNode(self, node):
         v_val = self.accept(node.expression)
-        return self.new('V_PAR',
-                        Value_ID=v_val.Value_ID,
-                        Invocation_Value_ID=v_val.Value_ID,
-                        Name=node.name)
+        v_par = self.new('V_PAR', Name=node.name)
+        relate(v_val, v_par, 800)
         
+        return v_par
+    
     def accept_GeneratePortEventNode(self, node):
         port_filt = lambda sel: (sel.Name == node.port_name or 
                                  one(sel).C_IR[4016].C_I[4012](where(Name=node.port_name)))

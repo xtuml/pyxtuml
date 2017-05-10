@@ -18,7 +18,6 @@
 
 import os
 import unittest
-import xtuml
 import bridgepoint
 
 import xtuml.consistency_check
@@ -73,23 +72,22 @@ class TestConcistency(unittest.TestCase):
         
     def test_unique_identifier_with_null(self):
         m = self.metamodel
-        act_blk = m.new('ACT_BLK')
-        act_blk.Block_ID = None
-        self.assertEqual(1, xtuml.check_uniqueness_constraint(m, 'ACT_BLK'))
+        pe_pe = m.new('PE_PE')
+        pe_pe.Element_ID = None
+        self.assertEqual(1, xtuml.check_uniqueness_constraint(m, 'PE_PE'))
         
     def test_uniqueness_constraint(self):
         m = self.metamodel
         self.assertTrue(m.is_consistent())
         
         s_dt = m.select_one('S_DT', xtuml.where_eq(Name='string'))
-        m.clone(s_dt)
+        pe_pe = xtuml.navigate_one(s_dt).PE_PE[8001]()
+        pe_pe_clone = m.clone(pe_pe)
         
-        # S_DT has two unique identifiers (I1 and I2). two instances
-        # produce one error each, hence 4 errors
         self.assertFalse(m.is_consistent())
-        self.assertEqual(4, xtuml.check_uniqueness_constraint(m, 'S_DT'))
+        self.assertEqual(2, xtuml.check_uniqueness_constraint(m, 'PE_PE'))
         
-        xtuml.delete(s_dt)
+        xtuml.delete(pe_pe_clone)
         self.assertTrue(m.is_consistent())
 
     def test_subtype_integrity(self):
