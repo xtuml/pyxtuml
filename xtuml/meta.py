@@ -103,7 +103,11 @@ def _is_null(instance, name):
     Determine if an attribute of an *instance* with a specific *name* 
     is null.
     '''
-    value = getattr(instance, name)
+    if name in instance.__dict__:
+        value = instance.__dict__[name]
+    else:
+        value = getattr(instance, name)
+
     if value:
         return False
     
@@ -272,7 +276,7 @@ class Link(dict):
         instances from being connected.
         '''
         if instance not in self:
-            self[instance] = set()
+            self[instance] = xtuml.OrderedSet()
         
         if another_instance in self[instance]:
             return True
@@ -311,7 +315,33 @@ class Link(dict):
         '''
         return next(iter(self.navigate(instance)), None)
         
-        
+    def compute_lookup_key(self, from_instance):
+        kwargs = dict()
+        for attr, other_attr in self.key_map.items():
+            if _is_null(from_instance, attr):
+                return None
+            
+            if attr in from_instance.__dict__:
+                kwargs[other_attr] = from_instance.__dict__[attr]
+            else:
+                kwargs[other_attr] = getattr(from_instance, attr)
+
+        return frozenset(tuple(kwargs.items()))
+
+    def compute_index_key(self, to_instance):
+        kwargs = dict()
+        for attr in self.key_map.values():
+            if _is_null(to_instance, attr):
+                return None
+            
+            if attr in to_instance.__dict__:
+                kwargs[attr] = to_instance.__dict__[attr]
+            else:
+                kwargs[attr] = getattr(to_instance, attr)
+
+        return frozenset(tuple(kwargs.items()))
+
+    
 class QuerySet(xtuml.OrderedSet):
     '''
     An ordered set which holds instances that match queries.

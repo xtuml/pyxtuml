@@ -93,38 +93,7 @@ def deserialize_value(ty, value):
     else:
         raise ParsingException("Unknown type named '%s'" % ty)
 
-
-def _is_null(instance, name):
-    '''
-    Determine if an attribute of an *instance* with a specific *name* 
-    is null.
-    '''
-    value = getattr(instance, name)
-    if value:
-        return False
     
-    elif value is None:
-        return True
-
-    name = name.upper()
-    for attr_name, attr_ty in instance.__metaclass__.attributes:
-        if attr_name.upper() != name:
-            continue
-
-        attr_ty = attr_ty.upper()
-        if attr_ty == 'UNIQUE_ID':
-            # UUID(int=0) is reserved for null
-            return value == 0
-
-        elif attr_ty == 'STRING':
-            # empty string is reserved for null
-            return len(value) == 0
-
-        else:
-            #null-values for integer, boolean and real are not supported
-            return False
-
-
 class ParsingException(Exception):
     '''
     An exception that may be thrown while loading (and parsing) a metamodel.
@@ -229,6 +198,8 @@ class ModelLoader(object):
     parser = None
     lexer = None
     statements = None
+
+    quietInsertMismatch = False
     
     def __init__(self):
         self.statements = list()
@@ -245,6 +216,9 @@ class ModelLoader(object):
         '''
         pass
     
+    def dontWarnInsertMismatch(self):
+        self.quietInsertMismatch = True
+
     def input(self, data, name='<string>'):
         '''
         Parse *data* directly from a string. The *name* is used when reporting
@@ -292,7 +266,7 @@ class ModelLoader(object):
             if not isinstance(stmt, CreateAssociationStmt):
                 continue
             
-            metamodel.define_association(stmt.rel_id, 
+            ass = metamodel.define_association(stmt.rel_id,
                                          stmt.source_kind,
                                          stmt.source_keys,
                                          'M' in stmt.source_cardinality,
@@ -303,6 +277,7 @@ class ModelLoader(object):
                                          'M' in stmt.target_cardinality,
                                          'C' in stmt.target_cardinality,
                                          stmt.target_phrase)
+            ass.formalize()
 
     def populate_unique_identifiers(self, metamodel):
         '''
@@ -329,7 +304,7 @@ class ModelLoader(object):
         return metamodel.define_class(kind, attributes)
     
     @staticmethod
-    def _populate_instance_with_positional_arguments(metamodel, stmt):
+    def _populate_instance_with_positional_arguments(metamodel, stmt, quietInsertMismatchWarning):
         '''
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using positional arguments.
@@ -340,18 +315,21 @@ class ModelLoader(object):
                                                  names, stmt.values)
             
         metaclass = metamodel.find_metaclass(stmt.kind)
-        #if len(metaclass.attributes) != len(stmt.values):
-        #    logger.warn('schema mismatch while loading an instance of %s',
-        #                stmt.kind)
+        if not quietInsertMismatchWarning:
+            if len(metaclass.attributes) != len(stmt.values):
+                logger.warn('schema mismatch while loading an instance of %s',
+                            stmt.kind)
                 
         inst = metamodel.new(stmt.kind)
         for attr, value in zip(metaclass.attributes, stmt.values):
             name, ty = attr
-            value = deserialize_value(ty, value) 
-            setattr(inst, name, value)
+            value = deserialize_value(ty, value)
+            inst.__dict__[name] = value
         
+        return inst
+    
     @staticmethod
-    def _populate_instance_with_named_arguments(metamodel, stmt):
+    def _populate_instance_with_named_arguments(metamodel, stmt, quietInsertMismatchWarning):
         '''
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using named arguments.
@@ -365,9 +343,10 @@ class ModelLoader(object):
         schema_unames = [name.upper() for name in metaclass.attribute_names]
         inst_unames = [name.upper() for name in stmt.names]
         
-        #if set(inst_unames) - set(schema_unames):
-        #    logger.warn('schema mismatch while loading an instance of %s',
-        #                stmt.kind)
+        if not quietInsertMismatchWarning:
+            if set(inst_unames) - set(schema_unames):
+                logger.warn('schema mismatch while loading an instance of %s',
+                            stmt.kind)
             
         inst = metamodel.new(stmt.kind)
         for name, ty in metaclass.attributes:
@@ -378,8 +357,10 @@ class ModelLoader(object):
             else:
                 value = None
             
-            setattr(inst, name, value)    
+            inst.__dict__[name] = value
 
+        return inst
+    
     def populate_instances(self, metamodel):
         '''
         Populate a *metamodel* with instances previously encountered from
@@ -390,67 +371,62 @@ class ModelLoader(object):
                 continue
             
             if stmt.names:
-                self._populate_instance_with_named_arguments(metamodel, stmt)
+                fn = self._populate_instance_with_named_arguments
             else:
-                self._populate_instance_with_positional_arguments(metamodel,
-                                                                  stmt)
-                
+                fn = self._populate_instance_with_positional_arguments
+            
+            inst = fn(metamodel, stmt, self.quietInsertMismatch)
+    
     def populate_connections(self, metamodel):
-        def compute_keys(inst):
-            for link in inst.__metaclass__.links.values():
-                kwargs = dict()
-                for attr in link.key_map.values():
-                    kwargs[attr] = getattr(inst, attr)
-                    
-                yield frozenset(tuple(kwargs.items()))
-        
-        lookup_table = dict()
-        for metaclass in metamodel.metaclasses.values():
-            lookup_table[metaclass] = dict()
-            for inst in metaclass.storage:
-                for key in compute_keys(inst):
-                    lookup_table[metaclass][key] = inst
-        
+        '''
+        Populate links in a *metamodel* with connections between them.
+        '''
+        storage = dict()
         for ass in metamodel.associations:
             source_class = ass.source_link.to_metaclass
             target_class = ass.target_link.to_metaclass
-            key_map = tuple(zip(ass.source_keys, ass.target_keys))
-        
-            for inst in source_class.storage:
-                kwargs = dict()
-                skip_instance = False
-                
-                for ref_key, primary_key in key_map:
-                    if _is_null(inst, ref_key):
-                        skip_instance = True
-                        break
+
+            if target_class not in storage:
+                storage[target_class] = dict()
+            
+            link_key = frozenset(ass.source_link.key_map.values())
+            if link_key not in storage[target_class]:
+                storage[target_class][link_key] = dict()
+                for other_inst in target_class.storage:
+                    inst_key = ass.source_link.compute_index_key(other_inst)
+                    if inst_key is None:
+                        continue
                     
-                    kwargs[primary_key] = getattr(inst, ref_key)
-                
-                if skip_instance:
+                    if inst_key not in storage[target_class][link_key]:
+                        storage[target_class][link_key][inst_key] = xtuml.OrderedSet()
+
+                    storage[target_class][link_key][inst_key].add(other_inst)
+
+            for inst in source_class.storage:
+                inst_key = ass.source_link.compute_lookup_key(inst)
+                if inst_key is None:
                     continue
                 
-                key = frozenset(tuple(kwargs.items()))
-                if key in lookup_table[target_class]:
-                    other_inst = lookup_table[target_class][key]
+                if inst_key not in storage[target_class][link_key]:
+                    continue
+                
+                for other_inst in storage[target_class][link_key][inst_key]:
                     ass.source_link.connect(other_inst, inst, check=False)
                     ass.target_link.connect(inst, other_inst, check=False)
-        
-        for ass in metamodel.associations:
-            ass.formalize()
 
         for inst in metamodel.instances:
             for attr in inst.__metaclass__.referential_attributes:
-                delattr(inst, attr)
-                
+                if attr in inst.__dict__:
+                    delattr(inst, attr)
+
     def populate(self, metamodel):
         '''
         Populate a *metamodel* with entities previously encountered from input.
         '''
         self.populate_classes(metamodel)
         self.populate_unique_identifiers(metamodel)
-        self.populate_instances(metamodel)
         self.populate_associations(metamodel)
+        self.populate_instances(metamodel)
         self.populate_connections(metamodel)
 
     def build_metamodel(self, id_generator=None):
