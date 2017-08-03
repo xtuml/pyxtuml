@@ -10,7 +10,7 @@ pyxtuml is a python library for parsing, manipulating, and generating
 Documentation
 =============
 
-Information on how to use pyxtuml is available at `Read the Docs <http://pyxtuml.readthedocs.org>`__.
+Information on how to use pyxtuml is available at `Read the Docs <http://pyxtuml.readthedocs.io>`__.
 
 ==============
 Reporting bugs
@@ -27,7 +27,8 @@ effort.
 License
 =======
 
-pyxtuml is licensed under the GPLv3, see LICENSE for more information.
+pyxtuml is licensed under the LGPLv3+, see COPYING and COPYING.LESSER
+for more information.
 
 .. |Build Status| image:: https://travis-ci.org/xtuml/pyxtuml.svg?branch=master
    :target: https://travis-ci.org/xtuml/pyxtuml

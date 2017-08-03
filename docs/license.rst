@@ -1,6 +1,6 @@
 License
 =======
-pyxtuml is licensed under the `GPL v3`_.
+pyxtuml is licensed under the `LGPLv3+`_.
 
 
-.. _`GPL v3`: http://www.gnu.org/copyleft/gpl.html
+.. _`LGPLv3+`: http://www.gnu.org/copyleft/lgpl.html

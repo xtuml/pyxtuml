@@ -1,0 +1,27 @@
+build: off
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Python27"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "32"
+
+init:
+  - "%PYTHON%/python --version"
+
+install:
+  - "%PYTHON%/python -m pip install ply"
+  - "%PYTHON%/python -m pip install sphinx"
+  - "%PYTHON%/python -m pip install sphinx_rtd_theme"
+
+before_test:
+  - "%PYTHON%/python setup.py build"
+
+test_script:
+  - "%PYTHON%/python setup.py test"
+
+after_test:
+  - "%PYTHON%/python -m sphinx -b man docs dist"
+  
+artifacts:
+  - path: dist\*

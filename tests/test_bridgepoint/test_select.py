@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 from tests.test_bridgepoint.utils import PrebuildFunctionTestCase
 from tests.test_bridgepoint.utils import prebuild_docstring
@@ -125,7 +140,7 @@ class TestSelect(PrebuildFunctionTestCase):
         
         act_lnk = one(act_sr).ACT_LNK[637]()
         self.assertIsNotNone(act_lnk)
-        self.assertIsNone(act_lnk.Rel_Phrase)
+        self.assertFalse(act_lnk.Rel_Phrase)
         
         o_obj = one(act_lnk).O_OBJ[678]()
         self.assertEqual(o_obj.Key_Lett, 'A')
@@ -133,9 +148,9 @@ class TestSelect(PrebuildFunctionTestCase):
         r_rel = one(act_lnk).R_REL[681]()
         self.assertEqual(r_rel.Numb, 1)
         
-        act_lnk = one(act_lnk).ACT_LNK[604, 'succeeds']()
+        act_lnk = one(act_lnk).ACT_LNK[604, 'precedes']()
         self.assertIsNotNone(act_lnk)
-        self.assertIsNone(act_lnk.Rel_Phrase)
+        self.assertFalse(act_lnk.Rel_Phrase)
         
         o_obj = one(act_lnk).O_OBJ[678]()
         self.assertEqual(o_obj.Key_Lett, 'B')
@@ -184,9 +199,9 @@ class TestSelect(PrebuildFunctionTestCase):
         r_rel = one(act_lnk).R_REL[681]()
         self.assertEqual(r_rel.Numb, 1)
         
-        act_lnk = one(act_lnk).ACT_LNK[604, 'succeeds']()
+        act_lnk = one(act_lnk).ACT_LNK[604, 'precedes']()
         self.assertIsNotNone(act_lnk)
-        self.assertIsNone(act_lnk.Rel_Phrase)
+        self.assertFalse(act_lnk.Rel_Phrase)
         
         o_obj = one(act_lnk).O_OBJ[678]()
         self.assertEqual(o_obj.Key_Lett, 'B')

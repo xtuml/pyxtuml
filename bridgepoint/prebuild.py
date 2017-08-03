@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Transform OAL actions from its textual form into instances in a the ooaofooa
 metamodel.
@@ -368,7 +383,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         
         while act_lnk:
             act_lnk_end = act_lnk
-            act_lnk = one(act_lnk).ACT_LNK[604, 'succeeds']()
+            act_lnk = one(act_lnk).ACT_LNK[604, 'precedes']()
             
         v_val = self.accept(node.handle)
         
@@ -1122,7 +1137,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return one(e_gsme).E_GES[703].E_ESS[701].ACT_SMT[603]()
     
     def accept_GenerateInstanceEventNode(self, node):
-        v_var = self.find_symbol(node, name=node.variable_name)
+        v_var = self.find_symbol(node, name=node.variable_access.variable_name)
         o_obj = one(v_var).V_INT[814].O_OBJ[818]()
         evt_filter = lambda sel: (sel.Drv_Lbl == node.event_specification.identifier or
                                   sel.Drv_Lbl == node.event_specification.identifier + '*')
@@ -1145,7 +1160,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
             v_var = one(v_trn).V_VAR[814]()
             relate(v_var, s_dt, 848)
         
-        v_var_to = self.find_symbol(node, name=node.to_variable_name)            
+        v_var_to = self.find_symbol(node, name=node.to_variable_access.variable_name)
         o_obj = one(v_var_to).V_INT[814].O_OBJ[818]()
         evt_filter = lambda sel: (sel.Drv_Lbl == node.event_specification.identifier or
                                   sel.Drv_Lbl == node.event_specification.identifier + '*')
@@ -1345,17 +1360,17 @@ class ActionPrebuilder(xtuml.tools.Walker):
                          Statement_ID=act_smt.Statement_ID,
                          RequiredOp_Id=spr_ro.Id)
     
-            if spr_po:
+            elif spr_po:
                 self.new('ACT_IOP',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedOp_Id=spr_po.Id)
     
-            if spr_rs:
+            elif spr_rs:
                 self.new('ACT_SGN',
                          Statement_ID=act_smt.Statement_ID,
                          RequiredSig_Id=spr_rs.Id)
             
-            if spr_ps:
+            elif spr_ps:
                 self.new('ACT_IOP',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedSig_Id=spr_ps.Id)
@@ -1384,26 +1399,31 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_val
 
     def accept_ParameterListNode(self, node, act_smt, v_val):
-        next_value_id = None
+        prev_v_par = None
         for child in reversed(node.children):
             v_par = self.accept(child)
-            v_par.Next_Value_ID = next_value_id
+            xtuml.relate(prev_v_par, v_par, 816, 'precedes')
+            xtuml.relate(v_par, one(v_val).V_BRV[801](), 810)
+            xtuml.relate(v_par, one(v_val).V_TRV[801](), 811)
+            xtuml.relate(v_par, one(v_val).V_FNV[801](), 817)
+            xtuml.relate(v_par, one(v_val).V_MSV[801](), 842)
+
+            xtuml.relate(v_par, one(act_smt).ACT_TFM[603](), 627)
+            xtuml.relate(v_par, one(act_smt).ACT_BRG[603](), 628)
+            xtuml.relate(v_par, one(act_smt).ACT_FNC[603](), 669)
+            xtuml.relate(v_par, one(act_smt).ACT_IOP[603](), 679)
+            xtuml.relate(v_par, one(act_smt).ACT_SGN[603](), 662)
+            xtuml.relate(v_par, one(act_smt).E_ESS[603](), 700)
             
-            if act_smt:
-                v_par.Statement_ID = act_smt.Statement_ID
-            
-            if v_val:
-                v_par.Invocation_Value_ID = v_val.Value_ID
-                
-            next_value_id = v_par.Value_ID
+            prev_v_par = v_par
     
     def accept_ParameterNode(self, node):
         v_val = self.accept(node.expression)
-        return self.new('V_PAR',
-                        Value_ID=v_val.Value_ID,
-                        Invocation_Value_ID=v_val.Value_ID,
-                        Name=node.name)
+        v_par = self.new('V_PAR', Name=node.name)
+        relate(v_val, v_par, 800)
         
+        return v_par
+    
     def accept_GeneratePortEventNode(self, node):
         port_filt = lambda sel: (sel.Name == node.port_name or 
                                  one(sel).C_IR[4016].C_I[4012](where(Name=node.port_name)))
@@ -1800,8 +1820,8 @@ def prebuild_action(instance):
         'SPR_PO': ProvidedOperationPrebuilder,
         'SPR_PS': ProvidedSignalPrebuilder
     }
-    kind = instance.__class__.__name__
-    walker = walker_map[kind](instance.__m__, instance)
+    metaclass = xtuml.get_metaclass(instance)
+    walker = walker_map[metaclass.kind](metaclass.metamodel, instance)
     logger.info('processing action %s' % walker.label)
     # walker.visitors.append(xtuml.tools.NodePrintVisitor())
     root = oal.parse(instance.Action_Semantics_internal)

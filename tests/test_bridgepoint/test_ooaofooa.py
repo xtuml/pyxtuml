@@ -15,10 +15,30 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
+import unittest
+import xtuml
+from bridgepoint import ooaofooa
 
-name = 'pyxtuml'
-date = '2017-07-23'
-version = '2.0'
-release = '2.0b1'  # ensure that this is the same as in setup.py
 
-complete_string = '%s v%s (%s)' % (name, release, date)
+class TestOoaOfOoa(unittest.TestCase):
+
+    def test_remove_globals(self):
+        m = ooaofooa.empty_model(load_globals=False)
+        s = xtuml.serialize_instances(m)
+        self.assertFalse(s)
+        
+        m = ooaofooa.empty_model(load_globals=True)
+        s = xtuml.serialize_instances(m)
+        self.assertTrue(s)
+        
+        ooaofooa.delete_globals(m)
+        s = xtuml.serialize_instances(m)
+        self.assertFalse(s)
+        
+    
+if __name__ == "__main__":
+    import logging
+    
+    logging.basicConfig(level=logging.DEBUG)
+    unittest.main()
+    

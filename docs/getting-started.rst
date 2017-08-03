@@ -26,7 +26,7 @@ You could also fetch the source code from github and install it manually:
 
 ::
 
-    $ git clone https://github.com/john-tornblom/pyxtuml.git
+    $ git clone https://github.com/xtuml/pyxtuml.git
     $ cd pyxtuml
     $ python setup.py install
    
@@ -40,7 +40,7 @@ Usage example
 -------------
 
 The `examples
-folder <https://github.com/john-tornblom/pyxtuml/tree/master/examples>`__
+folder <https://github.com/xtuml/pyxtuml/tree/master/examples>`__
 contains a few scripts which demonstrate how pyxtuml may be used.
 
 The following command will create an empty metamodel and populate it

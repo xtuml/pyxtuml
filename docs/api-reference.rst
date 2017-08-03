@@ -13,24 +13,28 @@ Loading Metamodels
 .. autoclass:: xtuml.ModelLoader
    :members: build_metamodel, file_input, filename_input, input, populate
 
-.. autoclass:: xtuml.UUIDGenerator
-
-.. autoclass:: xtuml.IntegerGenerator
-
 Metamodel Operations
 ^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: xtuml.MetaModel
-   :members: clone, new, select_one, select_many
+   :members: clone, new, find_class, find_metaclass, select_one, select_many
 
-.. autofunction:: xtuml.delete
 .. autofunction:: xtuml.navigate_one
 .. autofunction:: xtuml.navigate_any
 .. autofunction:: xtuml.navigate_many
 .. autofunction:: xtuml.navigate_subtype
 .. autofunction:: xtuml.relate
 .. autofunction:: xtuml.unrelate
+.. autofunction:: xtuml.delete
+.. autofunction:: xtuml.cardinality
 .. autofunction:: xtuml.where_eq
 .. autofunction:: xtuml.sort_reflexive
+.. autofunction:: xtuml.get_metamodel
+.. autofunction:: xtuml.get_metaclass
+
+.. autoclass:: xtuml.MetaClass
+   :members: clone, new, select_one, select_many, query, navigate, delete,
+	     attribute_names, append_attribute, insert_attribute, delete_attribute,
+	     referential_attributes, identifying_attributes, attribute_type
 
 .. autofunction:: xtuml.check_association_integrity
 .. autofunction:: xtuml.check_uniqueness_constraint
@@ -49,6 +53,10 @@ Persistance
 
 Tools
 ^^^^^
+.. autoclass:: xtuml.UUIDGenerator
+
+.. autoclass:: xtuml.IntegerGenerator
+
 .. autoclass:: xtuml.Walker
    :members: accept, default_accept
 
@@ -63,7 +71,13 @@ Tools
 Exceptions
 ^^^^^^^^^^
 .. autoexception:: xtuml.ParsingException
-.. autoexception:: xtuml.ModelException
+.. autoexception:: xtuml.MetaException
+.. autoexception:: xtuml.DeleteException
+.. autoexception:: xtuml.RelateException
+.. autoexception:: xtuml.UnrelateException
+.. autoexception:: xtuml.MetaModelException
+.. autoexception:: xtuml.UnknownLinkException
+.. autoexception:: xtuml.UnknownClassException
 
 
 bridgepoint
@@ -76,7 +90,7 @@ Loading Models
 .. autofunction:: bridgepoint.load_metamodel
 
 .. autoclass:: bridgepoint.ModelLoader
-   :members: filename_input
+   :members: filename_input, build_component
 
 Model Transformation
 ^^^^^^^^^^^^^^^^^^^^

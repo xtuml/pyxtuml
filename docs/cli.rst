@@ -16,9 +16,24 @@ association to check.
 
 **Note:** both the model and its schema needs to be provided by the user.
 
+**Available options**
+
+===============  ===================================================
+Option           Description
+===============  ===================================================
+--version        show program's version number and exit
+--help, -h       show this help message and exit
+-r NUMBER        limit consistency check to one or more associations
+-k KEY_LETTER    limit check for uniqueness constraint violations to
+                 one or more classes
+--verbosity, -v  increase debug logging level
+===============  ===================================================
+
+BridgePoint metamodel
+~~~~~~~~~~~~~~~~~~~~~
 There is also a tool available that checks for constraint violations in ooaofooa,
 the metamodel used by the BridgePoint editor. It can be used to detect various
-issues in a BridgePoint model:
+fatal issues in a BridgePoint model, e.g. parameters that lacks a type.
 
 ::
 
@@ -32,11 +47,37 @@ Option           Description
 ===============  ===================================================
 --version        show program's version number and exit
 --help, -h       show this help message and exit
--r <number>      limit consistency check to one or more associations
--k <key letter>  limit check for uniqueness constraint violations to
+-r NUMBER        limit consistency check to one or more associations
+-k KEY_LETTER    limit check for uniqueness constraint violations to
                  one or more classes
+--globals, -g    add builtin global data types automatically, e.g.
+                 boolean, integer and real
 --verbosity, -v  increase debug logging level
 ===============  ===================================================
+
+Model Execution
+---------------
+pyxtuml is able to execute BridgePoint functions, derived attributes and class 
+operations (both class-based and instance-based). There is also support for the
+built-in external entities ARCH and LOG. Asynchronous execution is currently 
+not supported, i.e. events, signals and state machines.
+
+::
+
+   $ python -m bridgepoint.interpret [options] <model_path> [another_model_path...]
+
+
+**Available options**
+
+=========================  =========================================================
+Option                     Description
+=========================  =========================================================
+--version                  show program's version number and exit
+--help, -h                 show this help message and exit
+--function=NAME, -f NAME   invoke a function named NAME
+--component=NAME, -c NAME  look for the function to invoke in a component named NAME
+--verbosity, -v            increase debug logging level
+=========================  =========================================================
 
 SQL Schema Generator
 --------------------
@@ -54,6 +95,7 @@ Option                     Description
 --version                  show program's version number and exit
 --help, -h                 show this help message and exit
 --component=NAME, -c NAME  export sql schema for the component named NAME
+--derived-attributes, -d   include derived attributes in the schema
 --output=PATH, -o PATH     save sql schema to PATH (required)
 --verbosity, -v            increase debug logging level
 =========================  ==============================================
