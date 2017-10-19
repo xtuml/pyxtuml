@@ -202,8 +202,6 @@ class ModelLoader(object):
     lexer = None
     statements = None
 
-    quietInsertMismatch = False
-    
     def __init__(self):
         self.statements = list()
         self.parser = yacc.yacc(debuglog=logger,
@@ -213,9 +211,6 @@ class ModelLoader(object):
                                 outputdir=os.path.dirname(__file__),
                                 tabmodule='xtuml.__xtuml_parsetab')
     
-    def dontWarnInsertMismatch(self):
-        self.quietInsertMismatch = True
-
     def input(self, data, name='<string>'):
         '''
         Parse *data* directly from a string. The *name* is used when reporting
@@ -301,7 +296,7 @@ class ModelLoader(object):
         return metamodel.define_class(kind, attributes)
     
     @staticmethod
-    def _populate_instance_with_positional_arguments(metamodel, stmt, quietInsertMismatchWarning):
+    def _populate_instance_with_positional_arguments(metamodel, stmt):
         '''
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using positional arguments.
@@ -312,9 +307,8 @@ class ModelLoader(object):
                                                  names, stmt.values)
             
         metaclass = metamodel.find_metaclass(stmt.kind)
-        if not quietInsertMismatchWarning:
-            if len(metaclass.attributes) != len(stmt.values):
-                logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
+        if len(metaclass.attributes) != len(stmt.values):
+            logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
                 
         inst = metamodel.new(stmt.kind)
         for attr, value in zip(metaclass.attributes, stmt.values):
@@ -332,7 +326,7 @@ class ModelLoader(object):
         return inst
     
     @staticmethod
-    def _populate_instance_with_named_arguments(metamodel, stmt, quietInsertMismatchWarning):
+    def _populate_instance_with_named_arguments(metamodel, stmt):
         '''
         Populate a *metamodel* with an instance previously encountered from 
         input that was defined using named arguments.
@@ -346,9 +340,8 @@ class ModelLoader(object):
         schema_unames = [name.upper() for name in metaclass.attribute_names]
         inst_unames = [name.upper() for name in stmt.names]
         
-        if not quietInsertMismatchWarning:
-            if set(inst_unames) - set(schema_unames):
-                logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
+        if set(inst_unames) - set(schema_unames):
+            logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
             
         inst = metamodel.new(stmt.kind)
         for name, ty in metaclass.attributes:
@@ -383,7 +376,7 @@ class ModelLoader(object):
             else:
                 fn = self._populate_instance_with_positional_arguments
             
-            fn(metamodel, stmt, self.quietInsertMismatch)
+            fn(metamodel, stmt)
     
     def populate_connections(self, metamodel):
         '''
