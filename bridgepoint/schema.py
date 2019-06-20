@@ -17,7 +17,7 @@
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 
-__version__ = 5.3
+__version__ = 6.16
 
 
 classes = '''
