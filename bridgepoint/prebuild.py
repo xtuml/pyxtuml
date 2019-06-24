@@ -1582,12 +1582,21 @@ class TransitionPrebuilder(ActionPrebuilder):
         return ''
         
     def accept_BodyNode(self, node):
-        act_sab = self.new('ACT_SAB')
-        relate(act_sab, self._sm_act, 691)
-        
-        self.act_act = self.new('ACT_ACT')
-        
-        relate(act_sab, self.act_act, 698)
+        sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
+        if sm_moah is not None:
+            act_sab = self.new('ACT_SAB')
+            relate(act_sab, self._sm_act, 691)
+            
+            self.act_act = self.new('ACT_ACT')
+            
+            relate(act_sab, self.act_act, 698)
+        else:
+            act_tab = self.new('ACT_TAB')
+            relate(act_tab, self._sm_act, 688)
+            
+            self.act_act = self.new('ACT_ACT')
+            
+            relate(act_tab, self.act_act, 698)
         
         return ActionPrebuilder.accept_BodyNode(self, node)
 

@@ -902,8 +902,11 @@ class OALParser(object):
                          'GE',
                          'PLUS',
                          'MINUS',
+                         'PIPE',
                          'DIV',
                          'MOD',
+                         'AMP',
+                         'CARET',
                          'COMMENT',
                          'SL_STRING'
         )
@@ -915,8 +918,8 @@ class OALParser(object):
         ('left', 'OR'),
         ('left', 'AND'),
         ('nonassoc', 'LESSTHAN', 'LE', 'DOUBLEEQUAL', 'GT', 'GE', 'NOTEQUAL'),
-        ('left', 'PLUS', "MINUS"),
-        ('left', "TIMES", "DIV"),
+        ('left', 'PLUS', 'MINUS', 'PIPE'),
+        ('left', 'TIMES', 'DIV', 'AMP', 'CARET'),
         ('left', 'MOD'),
         ('right', 'UNARY'),
     )
@@ -1106,6 +1109,11 @@ class OALParser(object):
         r"\-"
         t.endlexpos = t.lexpos + len(t.value)
         return t
+
+    def t_PIPE(self, t):
+        r"\|"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
     
     def t_DIV(self, t):
         r"/"
@@ -1116,7 +1124,17 @@ class OALParser(object):
         r"%"
         t.endlexpos = t.lexpos + len(t.value)
         return t
+ 
+    def t_AMP(self, t):
+        r"&"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
     
+    def t_CARET(self, t):
+        r"\^"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+ 
     def t_newline(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
@@ -1730,9 +1748,12 @@ class OALParser(object):
         '''
         expression : expression PLUS  expression
                    | expression MINUS expression
+                   | expression PIPE  expression
                    | expression TIMES expression
                    | expression DIV   expression
                    | expression MOD   expression
+                   | expression AMP   expression
+                   | expression CARET expression
         '''
         p[0] = BinaryOperationNode(left=p[1],
                                    operator=p[2],

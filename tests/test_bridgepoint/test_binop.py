@@ -394,7 +394,239 @@ class TestBinOp(PrebuildFunctionTestCase):
         
         v_val = one(v_bin).V_VAL[803]()
         self.assertIsNotNone(v_val)
+
+    @prebuild_docstring
+    def test_union(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        return objs1 | objs2;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
         
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 4)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 28)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '|')
+        
+        v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(v_val)
+        
+        v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(v_val)
+
+    @prebuild_docstring
+    def test_union2(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        return objs1 + objs2;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 4)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 28)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '+')
+        
+        v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(v_val)
+        
+        v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(v_val)
+
+    @prebuild_docstring
+    def test_intersection(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        return objs1 & objs2;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 4)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 28)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '&')
+        
+        v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(v_val)
+        
+        v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(v_val)
+
+    @prebuild_docstring
+    def test_difference(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        return objs1 - objs2;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 4)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 28)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '-')
+        
+        v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(v_val)
+        
+        v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(v_val)
+ 
+    @prebuild_docstring
+    def test_disunion(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        return objs1 ^ objs2;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 4)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 28)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '^')
+        
+        v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(v_val)
+        
+        v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(v_val)
+
+    @prebuild_docstring
+    def test_union_ltr_precedence(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        select any obj3 from instances of OBJECT;
+        return objs1 | objs2 | obj3;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 5)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 35)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '|')
+        
+        l_v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(l_v_val)
+
+        l_v_bin = one(l_v_val).V_BIN[801]()
+        self.assertEqual(l_v_bin.Operator, '|')
+        
+        r_v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(r_v_val)
+
+    @prebuild_docstring
+    def test_union_intersection_precedence(self):
+        '''
+        select many objs1 from instances of OBJECT;
+        select many objs2 from instances of OBJECT;
+        select any obj3 from instances of OBJECT;
+        return objs1 | objs2 & obj3;
+        '''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 5)
+        self.assertEqual(v_val.StartPosition, 16)
+        self.assertEqual(v_val.EndPosition, 35)
+
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        
+        v_bin = one(v_val).V_BIN[801]()
+        self.assertEqual(v_bin.Operator, '|')
+        
+        l_v_val = one(v_bin).V_VAL[802]()
+        self.assertIsNotNone(l_v_val)
+        
+        r_v_val = one(v_bin).V_VAL[803]()
+        self.assertIsNotNone(r_v_val)
+
+        r_v_bin = one(r_v_val).V_BIN[801]()
+        self.assertEqual(r_v_bin.Operator, '&')
+ 
     
 if __name__ == "__main__":
     import logging

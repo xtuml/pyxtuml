@@ -371,7 +371,12 @@ class PrebuildFunctionTestCase(CompareAST):
         
         s_dt = self.metamodel.select_any('S_DT', lambda sel: sel.Name == 'void')
         xtuml.relate(s_dt, s_sync, 25)
-        
+
+        pe_pe2 = self.metamodel.new('PE_PE')
+        o_obj = self.metamodel.new('O_OBJ')
+        o_obj.Key_Lett = 'OBJECT'
+        xtuml.relate(o_obj, pe_pe2, 8001)
+
     def tearDown(self):
         del self.metamodel
         
