@@ -241,6 +241,9 @@ class ActionPrebuilder(xtuml.tools.Walker):
     
     def v_int(self, node, name, o_obj):
         s_dt = self.s_dt('inst_ref<Object>')
+        s_irdt = one(o_obj).S_IRDT[123](lambda sel: not sel.isSet)
+        if s_irdt is not None:
+            s_dt = one(s_irdt).S_DT[17]()
         v_var = self.v_var(node, Name=name)
         v_int = self.new('V_INT')  # TODO: V_INT.IsImplicitInFor
         
@@ -255,6 +258,9 @@ class ActionPrebuilder(xtuml.tools.Walker):
         
     def v_ins(self, node, name, o_obj):
         s_dt = self.s_dt('inst_ref_set<Object>')
+        s_irdt = one(o_obj).S_IRDT[123](lambda sel: sel.isSet)
+        if s_irdt is not None:
+            s_dt = one(s_irdt).S_DT[17]()
         v_var = self.v_var(node, Name=name)
         v_ins = self.new('V_INS')
         
@@ -280,8 +286,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_trn
     
     def v_isr(self, node, name):
-        s_dt = self.s_dt('inst_ref_set<Object>')
         v_var = self.find_symbol(node, name)
+        s_dt = one(v_var).S_DT[848]()
         v_val = self.v_val(node)
         v_isr = self.new('V_ISR')
         
@@ -292,8 +298,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_isr
     
     def v_irf(self, node, name):
-        s_dt = self.s_dt('inst_ref<Object>')
         v_var = self.find_symbol(node, name)
+        s_dt = one(v_var).S_DT[848]()
         v_val = self.v_val(node)
         v_irf = self.new('V_IRF')
         
@@ -1005,11 +1011,21 @@ class ActionPrebuilder(xtuml.tools.Walker):
         v_val_l = self.accept(node.left)
         v_val_r = self.accept(node.right)
 
+        l_s_dt = one(v_val_l).S_DT[820]()
         if node.operator.lower() in ['<', '<=', '==', '!=', '>=', '>',
                                      'and', 'or']:
             s_dt = self.s_dt('boolean')
+        elif node.operator.lower() in ['|', '+', '&', '^', '-'] and (
+            l_s_dt == self.s_dt('inst_ref<Object>') or l_s_dt == self.s_dt('inst_ref_set<Object>')):
+            # set the correct IRDT for set operation
+            # NOTE: this assumes that if the value is still a generic instance reference type that it
+            # is a result of a selection and therefore is an instance reference or instance set reference
+            s_irdt = one(v_val_l).V_IRF[801].V_VAR[808].V_INT[814].O_OBJ[818].S_IRDT[123](lambda sel: sel.isSet)
+            if s_irdt is None:
+                s_irdt = one(v_val_l).V_ISR[801].V_VAR[809].V_INS[814].O_OBJ[819].S_IRDT[123](lambda sel: sel.isSet)
+            s_dt = one(s_irdt).S_DT[17]()
         else:
-            s_dt = one(v_val_l).S_DT[820]()
+            s_dt = l_s_dt
         
         v_val = self.v_val(node)
         v_bin = self.new('V_BIN', Operator=node.operator.lower())
