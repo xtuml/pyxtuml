@@ -1014,18 +1014,18 @@ class ActionPrebuilder(xtuml.tools.Walker):
         v_val_r = self.accept(node.right)
 
         l_s_dt = one(v_val_l).S_DT[820]()
+        l_s_irdt = one(l_s_dt).S_IRDT[17]()
         if node.operator.lower() in ['<', '<=', '==', '!=', '>=', '>',
                                      'and', 'or']:
             s_dt = self.s_dt('boolean')
-        elif node.operator.lower() in ['|', '+', '&', '^', '-'] and (
+        elif node.operator.lower() in ['|', '+', '&', '^', '-'] and (l_s_irdt or
             l_s_dt == self.s_dt('inst_ref<Object>') or l_s_dt == self.s_dt('inst_ref_set<Object>')):
             # set the correct IRDT for set operation
-            # NOTE: this assumes that if the value is still a generic instance reference type that it
-            # is a result of a selection and therefore is an instance reference or instance set reference
-            s_irdt = one(v_val_l).V_IRF[801].V_VAR[808].V_INT[814].O_OBJ[818].S_IRDT[123](lambda sel: sel.isSet)
-            if s_irdt is None:
-                s_irdt = one(v_val_l).V_ISR[801].V_VAR[809].V_INS[814].O_OBJ[819].S_IRDT[123](lambda sel: sel.isSet)
-            s_dt = one(s_irdt).S_DT[17]()
+            if l_s_irdt is not None:
+                s_irdt = one(l_s_irdt).O_OBJ[123].S_IRDT[123](lambda sel: sel.isSet)
+                s_dt = one(s_irdt).S_DT[17]()
+            else:
+                s_dt = self.s_dt('inst_ref_set<Object>')
         else:
             s_dt = l_s_dt
         
