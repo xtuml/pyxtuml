@@ -240,10 +240,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_var
     
     def v_int(self, node, name, o_obj):
-        s_dt = self.s_dt('inst_ref<Object>')
         s_irdt = one(o_obj).S_IRDT[123](lambda sel: not sel.isSet)
-        if s_irdt is not None:
-            s_dt = one(s_irdt).S_DT[17]()
+        s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref<Object>')
         v_var = self.v_var(node, Name=name)
         v_int = self.new('V_INT')  # TODO: V_INT.IsImplicitInFor
         
@@ -257,10 +255,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_int
         
     def v_ins(self, node, name, o_obj):
-        s_dt = self.s_dt('inst_ref_set<Object>')
         s_irdt = one(o_obj).S_IRDT[123](lambda sel: sel.isSet)
-        if s_irdt is not None:
-            s_dt = one(s_irdt).S_DT[17]()
+        s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref_set<Object>')
         v_var = self.v_var(node, Name=name)
         v_ins = self.new('V_INS')
         
@@ -310,10 +306,9 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_irf
 
     def v_avl(self, node, o_attr, root_v_val):
-        s_dt = one(o_attr).S_DT[114]()
-        if s_dt == self.s_dt('same_as<Base_Attribute>'):
-            s_dt = one(o_attr).O_RATTR[106].O_BATTR[113].O_ATTR[106].S_DT[114]()
-            
+        s_dt = (one(o_attr).O_RATTR[106].O_BATTR[113].O_ATTR[106].S_DT[114]() or
+                one(o_attr).S_DT[114]())
+        
         v_val = self.v_val(node)
         v_avl = self.new('V_AVL')
             
@@ -1013,24 +1008,25 @@ class ActionPrebuilder(xtuml.tools.Walker):
         v_val_l = self.accept(node.left)
         v_val_r = self.accept(node.right)
 
-        l_s_dt = one(v_val_l).S_DT[820]()
-        l_s_irdt = one(l_s_dt).S_IRDT[17]()
-        if node.operator.lower() in ['<', '<=', '==', '!=', '>=', '>',
-                                     'and', 'or']:
+        s_dt_l = one(v_val_l).S_DT[820]()
+        operator = node.operator.lower()
+
+        # relational binops yield boolean values
+        if operator in ['<', '<=', '==', '!=', '>=', '>', 'and', 'or']:
             s_dt = self.s_dt('boolean')
-        elif node.operator.lower() in ['|', '+', '&', '^', '-'] and (l_s_irdt or
-            l_s_dt == self.s_dt('inst_ref<Object>') or l_s_dt == self.s_dt('inst_ref_set<Object>')):
-            # set the correct IRDT for set operation
-            if l_s_irdt is not None:
-                s_irdt = one(l_s_irdt).O_OBJ[123].S_IRDT[123](lambda sel: sel.isSet)
-                s_dt = one(s_irdt).S_DT[17]()
-            else:
-                s_dt = self.s_dt('inst_ref_set<Object>')
+
+        # set-theoretic binops yield inst_ref_set values
+        elif (operator in ['|', '+', '&', '^', '-'] and
+              s_dt_l in [self.s_dt('inst_ref<Object>'), self.s_dt('inst_ref_set<Object>')]):
+            s_irdt = one(s_dt_l).S_IRDT[17].O_OBJ[123].S_IRDT[123](lambda sel: sel.isSet)
+            s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref_set<Object>')
+
+        # default: cast to left type
         else:
-            s_dt = l_s_dt
+            s_dt = s_dt_l
         
         v_val = self.v_val(node)
-        v_bin = self.new('V_BIN', Operator=node.operator.lower())
+        v_bin = self.new('V_BIN', Operator=operator)
         
         relate(v_val, s_dt, 820)
         relate(v_bin, v_val, 801)
