@@ -416,7 +416,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 28)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '|')
@@ -448,7 +448,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 28)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '+')
@@ -480,7 +480,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 28)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '&')
@@ -512,7 +512,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 28)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '-')
@@ -544,7 +544,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 28)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '^')
@@ -577,7 +577,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 35)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '|')
@@ -613,7 +613,7 @@ class TestBinOp(PrebuildFunctionTestCase):
         self.assertEqual(v_val.EndPosition, 35)
 
         s_dt = one(v_val).S_DT[820]()
-        self.assertEqual(s_dt.Name, 'inst_ref_set<Object>')
+        self.assertEqual(s_dt.Name, 'inst_ref_set<OBJECT>')
         
         v_bin = one(v_val).V_BIN[801]()
         self.assertEqual(v_bin.Operator, '|')

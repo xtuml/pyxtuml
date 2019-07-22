@@ -375,7 +375,26 @@ class PrebuildFunctionTestCase(CompareAST):
         pe_pe2 = self.metamodel.new('PE_PE')
         o_obj = self.metamodel.new('O_OBJ')
         o_obj.Key_Lett = 'OBJECT'
+        o_obj.Name = 'OBJECT'
         xtuml.relate(o_obj, pe_pe2, 8001)
+
+        pe_pe3 = self.metamodel.new('PE_PE')
+        s_dt2 = self.metamodel.new('S_DT')
+        s_dt2.Name = 'inst_ref<OBJECT>'
+        s_irdt2 = self.metamodel.new('S_IRDT')
+        s_irdt2.isSet = False
+        xtuml.relate(s_dt2, pe_pe3, 8001)
+        xtuml.relate(s_irdt2, s_dt2, 17)
+        xtuml.relate(s_irdt2, o_obj, 123)
+
+        pe_pe4 = self.metamodel.new('PE_PE')
+        s_dt3 = self.metamodel.new('S_DT')
+        s_dt3.Name = 'inst_ref_set<OBJECT>'
+        s_irdt3 = self.metamodel.new('S_IRDT')
+        s_irdt3.isSet = True
+        xtuml.relate(s_dt3, pe_pe4, 8001)
+        xtuml.relate(s_irdt3, s_dt3, 17)
+        xtuml.relate(s_irdt3, o_obj, 123)
 
     def tearDown(self):
         del self.metamodel
