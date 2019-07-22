@@ -1363,10 +1363,13 @@ class ActionPrebuilder(xtuml.tools.Walker):
         c_po = one(self.c_c).C_PO[4010](port_filt)        
         c_ir = one(c_po).C_IR[4016]()
         c_ep = one(c_ir).C_I[4012].C_EP[4003](where(Name=node.action_name))            
-        spr_ro = one(c_ep).SPR_REP[4500].SPR_RO[4502]()
-        spr_rs = one(c_ep).SPR_REP[4500].SPR_RS[4502]()
-        spr_po = one(c_ep).SPR_PEP[4501].SPR_PO[4503]()
-        spr_ps = one(c_ep).SPR_PEP[4501].SPR_PS[4503]()
+        spr_rep = one(c_ir).C_R[4009].SPR_REP[4500](where(ExecutableProperty_Id=c_ep.Id))
+        spr_ro = one(spr_rep).SPR_RO[4502]()
+        spr_rs = one(spr_rep).SPR_RS[4502]()
+        spr_pep = one(c_ir).C_P[4009].SPR_PEP[4501](where(ExecutableProperty_Id=c_ep.Id))
+        spr_po = one(spr_pep).SPR_PO[4503]()
+        spr_ps = one(spr_pep).SPR_PS[4503]()
+
         
         if act_smt:
             if spr_ro:
@@ -1389,19 +1392,17 @@ class ActionPrebuilder(xtuml.tools.Walker):
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedSig_Id=spr_ps.Id)
         
-        spr_rep = one(spr_ro).SPR_REP[4502]()
-        spr_pep = one(spr_po).SPR_PEP[4503]()
         c_io = one(c_ep).C_IO[4004]()
         v_val = None
         
-        if spr_rep:
+        if spr_ro:
             v_val = self.v_val(node, DT_ID=c_io.DT_ID)
             self.new('V_MSV',
                      Value_ID=v_val.Value_ID,
                      REP_Id=spr_rep.Id,
                      ParmListOK=True)
             
-        if spr_pep:
+        if spr_po:
             v_val = self.v_val(node, DT_ID=c_io.DT_ID)
             self.new('V_MSV',
                      Value_ID=v_val.Value_ID,
@@ -1445,9 +1446,11 @@ class ActionPrebuilder(xtuml.tools.Walker):
 
         c_ir = one(c_po).C_IR[4016]()
         c_ep = one(c_ir).C_I[4012].C_EP[4003](where(Name=node.action_name))            
-        spr_rs = one(c_ep).SPR_REP[4500].SPR_RS[4502]()
-        spr_ps = one(c_ep).SPR_PEP[4501].SPR_PS[4503]()
-        
+        spr_rep = one(c_ir).C_R[4009].SPR_REP[4500](where(ExecutableProperty_Id=c_ep.Id))
+        spr_rs = one(spr_rep).SPR_RS[4502]()
+        spr_pep = one(c_ir).C_P[4009].SPR_PEP[4501](where(ExecutableProperty_Id=c_ep.Id))
+        spr_ps = one(spr_pep).SPR_PS[4503]()
+
 
         act_smt = self.act_smt(node)
         v_val = self.accept(node.expression)
