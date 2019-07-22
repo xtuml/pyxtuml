@@ -311,6 +311,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
 
     def v_avl(self, node, o_attr, root_v_val):
         s_dt = one(o_attr).S_DT[114]()
+        if s_dt == self.s_dt('same_as<Base_Attribute>'):
+            s_dt = one(o_attr).O_RATTR[106].O_BATTR[113].O_ATTR[106].S_DT[114]()
             
         v_val = self.v_val(node)
         v_avl = self.new('V_AVL')
