@@ -20,6 +20,7 @@ import collections
 import functools
 import os
 import logging
+import zipfile
 import keyword
 import xtuml
 
@@ -509,12 +510,21 @@ class ModelLoader(xtuml.ModelLoader):
         
         If the filename is a directory, files that ends with .xtuml located
         somewhere in the directory or sub directories will be loaded as well.
+
+        If the filename is a zip archive, files that ends with .xtuml located
+        somewhere in the archive will be loaded as well.
         '''
         if os.path.isdir(path_or_filename):
             for path, _, files in os.walk(path_or_filename):
                 for name in files:
                     if name.endswith('.xtuml'):
                         xtuml.ModelLoader.filename_input(self, os.path.join(path, name))
+        elif zipfile.is_zipfile(path_or_filename):
+            with zipfile.ZipFile(path_or_filename) as zipinput:
+                for zipinfo in zipinput.filelist:
+                    if zipinfo.filename.endswith('.xtuml'):
+                        with zipinput.open(zipinfo) as f:
+                            xtuml.ModelLoader.file_input(self, f)
         else:
             xtuml.ModelLoader.filename_input(self, path_or_filename)
 
