@@ -491,7 +491,7 @@ class MetaClass(object):
         self.indices = dict()
         self.links = dict()
         self.storage = list()
-        self.clazz = type(kind, (Class,), dict(__metaclass__=self))
+        self.clazz = type(str(kind), (Class,), dict(__metaclass__=self))
         
     def __call__(self, *args, **kwargs):
         '''

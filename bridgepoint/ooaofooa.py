@@ -23,6 +23,7 @@ import logging
 import zipfile
 import keyword
 import xtuml
+import io
 
 from xtuml import navigate_one as one
 from xtuml import navigate_many as many
@@ -524,7 +525,7 @@ class ModelLoader(xtuml.ModelLoader):
                 for zipinfo in zipinput.filelist:
                     if zipinfo.filename.endswith('.xtuml'):
                         with zipinput.open(zipinfo) as f:
-                            xtuml.ModelLoader.file_input(self, f)
+                            xtuml.ModelLoader.file_input(self, io.TextIOWrapper(f, encoding='UTF-8'))
         else:
             xtuml.ModelLoader.filename_input(self, path_or_filename)
 
