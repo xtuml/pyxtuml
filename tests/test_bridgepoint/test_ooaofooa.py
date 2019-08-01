@@ -15,6 +15,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
+import atexit
+import os
+import shutil
 import unittest
 import xtuml
 from bridgepoint import ooaofooa
@@ -35,7 +38,20 @@ class TestOoaOfOoa(unittest.TestCase):
         s = xtuml.serialize_instances(m)
         self.assertFalse(s)
         
-    
+    def test_folder_input(self):
+        dirname = os.path.dirname(__file__) + os.sep + '..' + os.sep + 'resources'
+        metamodel = ooaofooa.load_metamodel(dirname, load_globals=False)
+        self.assertTrue(metamodel.select_any('S_DT', xtuml.where_eq(Name='integer')) is not None)
+
+    def test_zipfile_input(self):
+        dirname = os.path.dirname(__file__) + os.sep + '..' + os.sep + 'resources'
+        zipfile = shutil.make_archive(dirname, 'zip', dirname)
+        atexit.register(os.remove, zipfile)
+
+        metamodel = ooaofooa.load_metamodel(zipfile, load_globals=False)
+        self.assertTrue(metamodel.select_any('S_DT', xtuml.where_eq(Name='integer')) is not None)
+        
+        
 if __name__ == "__main__":
     import logging
     
