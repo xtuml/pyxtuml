@@ -71,7 +71,7 @@ class TestCommand(Command):
 setup(name='pyxtuml',
       version='2.2.0', # ensure that this is the same as in xtuml.version
       description='Library for parsing, manipulating, and generating BridgePoint xtUML models',
-      author='John Törnblom',
+      author=u'John Törnblom',
       author_email='john.tornblom@gmail.com',
       url='https://github.com/xtuml/pyxtuml',
       license='LGPLv3+',
