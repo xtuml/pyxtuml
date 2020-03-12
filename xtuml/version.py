@@ -17,8 +17,8 @@
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 name = 'pyxtuml'
-date = '2019-09-02'
+date = '2020-03-12'
 version = '2.2'
-release = '2.2.0'  # ensure that this is the same as in setup.py
+release = '2.2.1'  # ensure that this is the same as in setup.py
 
 complete_string = '%s v%s (%s)' % (name, release, date)
