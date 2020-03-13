@@ -42,7 +42,9 @@ from .persist import persist_unique_identifiers
 from .persist import serialize_database
 from .persist import serialize_schema
 from .persist import serialize_class
+from .persist import serialize_classes
 from .persist import serialize_association
+from .persist import serialize_associations
 from .persist import serialize_unique_identifiers
 from .persist import serialize_instances
 from .persist import serialize_instance

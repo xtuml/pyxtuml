@@ -139,18 +139,29 @@ def serialize_unique_identifiers(metamodel):
                                                           attribute_names)
     return s
 
+
+def serialize_classes(metamodel):
+    '''
+    Serialize all class definitions in a *metamodel*.
+    '''
+    return ''.join([serialize_class(metamodel.metaclasses[kind].clazz)
+                    for kind in sorted(metamodel.metaclasses.keys())])
+
+
+def serialize_associations(metamodel):
+    '''
+    Serialize all association definitions in a *metamodel*.
+    '''
+    orderby = lambda x: x.rel_id
+    return ''.join([serialize_association(ass)
+                    for ass in sorted(metamodel.associations, key=orderby)])
+
+
 def serialize_schema(metamodel):
     '''
     Serialize all class and association definitions in a *metamodel*.
     '''
-    s = ''
-    for kind in sorted(metamodel.metaclasses.keys()):
-        s += serialize_class(metamodel.metaclasses[kind].clazz)
-    
-    for ass in sorted(metamodel.associations, key=lambda x: x.rel_id):
-        s += serialize_association(ass)
-    
-    return s
+    return serialize_classes(metamodel) + serialize_associations(metamodel)
 
 
 def serialize_database(metamodel):

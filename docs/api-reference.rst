@@ -52,7 +52,12 @@ Persistance
 .. autofunction:: xtuml.serialize_schema
 .. autofunction:: xtuml.serialize_instances
 .. autofunction:: xtuml.serialize_instance
-
+.. autofunction:: xtuml.serialize_classes
+.. autofunction:: xtuml.serialize_class
+.. autofunction:: xtuml.serialize_associations
+.. autofunction:: xtuml.serialize_association
+.. autofunction:: xtuml.serialize_unique_identifiers
+		  
 Tools
 ^^^^^
 .. autoclass:: xtuml.UUIDGenerator
