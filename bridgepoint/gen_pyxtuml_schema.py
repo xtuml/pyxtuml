@@ -21,6 +21,7 @@ Generate the pyxtuml bridgepoint schema module from a bridgepoint metamodel.
 '''
 
 import optparse
+import re
 import string
 import sys
 import logging
@@ -153,7 +154,7 @@ def main():
     '''
     Parse argv for options and arguments, and start schema generation.
     '''
-    parser = optparse.OptionParser(usage="%prog [options] <metamodel_path>",
+    parser = optparse.OptionParser(usage="%prog [options] <bridgepoint source path>",
                                    version=xtuml.version.complete_string,
                                    formatter=optparse.TitledHelpFormatter())
                                    
@@ -163,9 +164,6 @@ def main():
                       help="save sql schema to PATH (required)",
                       action="store", default=None)
 
-    parser.add_option("-V", "--version-info", dest='vinfo', action="store", 
-                      help="Version info for the schema", default='')
-    
     parser.add_option("-v", "--verbosity", dest='verbosity', action="count", 
                       help="increase debug logging level", default=2)
 
@@ -185,13 +183,17 @@ def main():
 
     ooaofooa_path = args[0] + '/src/org.xtuml.bp.core/models/org.xtuml.bp.core/ooaofooa'
     globals_path = args[0] + '/src/org.xtuml.bp.pkg/globals/Globals.xtuml'
-
+    version_path = args[0] + '/src/org.xtuml.bp.pkg/about.mappings'
+    
     with open(globals_path, 'r') as f:
         globals_instances = f.read()
         
     m = mk_ooaofooa_component(ooaofooa_path)
+
+    with open(version_path, 'r') as f:
+        version = re.findall(r'0=([\d\.]*)\.qualifier', f.read())[0]
     
-    s = tmpl.substitute(version=opts.vinfo,
+    s = tmpl.substitute(version=version,
                         classes=xtuml.serialize_classes(m).strip(),
                         associations=xtuml.serialize_associations(m).strip(),
                         indices=xtuml.serialize_unique_identifiers(m).strip(),
