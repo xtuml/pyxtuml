@@ -130,8 +130,8 @@ def serialize_class(Cls):
 
 def serialize_unique_identifiers(metamodel):
     s = ''
-    
-    for metaclass in metamodel.metaclasses.values():
+    for kind in sorted(metamodel.metaclasses.keys()):
+        metaclass = metamodel.metaclasses[kind]
         for index_name, attribute_names in metaclass.indices.items():
             attribute_names = ', '.join(attribute_names)
             s += 'CREATE UNIQUE INDEX %s ON %s (%s);\n' % (index_name,
