@@ -120,7 +120,8 @@ def serialize_class(Cls):
     Serialize an xtUML metamodel class.
     '''
     metaclass = xtuml.get_metaclass(Cls)
-    attributes = ['%s %s' % (name, ty.upper()) for name, ty in metaclass.attributes]
+    attributes = ['%s %s' % (name, ty.upper())
+                  for name, ty in metaclass.attributes]
     
     s = 'CREATE TABLE %s (\n    ' % metaclass.kind
     s += ',\n    '.join(attributes)
