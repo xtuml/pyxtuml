@@ -152,7 +152,7 @@ def serialize_associations(metamodel):
     '''
     Serialize all association definitions in a *metamodel*.
     '''
-    orderby = lambda x: x.rel_id
+    orderby = lambda x: (x.rel_id, x.target_link.from_metaclass.kind)
     return ''.join([serialize_association(ass)
                     for ass in sorted(metamodel.associations, key=orderby)])
 
