@@ -499,11 +499,11 @@ class ModelLoader(xtuml.ModelLoader):
     
     def __init__(self, load_globals=True):
         xtuml.ModelLoader.__init__(self)
-        self.input(schema.classes, 'ooaofooa classes (v%02.1f)' % schema.__version__)
-        self.input(schema.associations, 'ooaofooa associations (v%02.1f)' % schema.__version__)
-        self.input(schema.indices, 'ooaofooa indices (v%02.1f)' % schema.__version__)
+        self.input(schema.classes, 'ooaofooa classes (v%s)' % schema.__version__)
+        self.input(schema.associations, 'ooaofooa associations (v%s)' % schema.__version__)
+        self.input(schema.indices, 'ooaofooa indices (v%s)' % schema.__version__)
         if load_globals:
-            self.input(schema.globals, 'predefined ooaofooa globals (v%02.1f)' % schema.__version__)
+            self.input(schema.globals, 'predefined ooaofooa globals (v%s)' % schema.__version__)
         
     def filename_input(self, path_or_filename):
         '''
