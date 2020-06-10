@@ -422,7 +422,7 @@ class ActionWalker(xtuml.Walker):
         value = node.value[1:-1]
         return property(lambda: value)
     
-    def accept_EnumNode(self, node):
+    def accept_EnumOrNamedConstantNode(self, node):
         item = self.symtab.find_symbol(node.namespace)
         value = getattr(item, node.name)
         return property(lambda: value)

@@ -20,6 +20,7 @@ from tests.test_bridgepoint.utils import PrebuildFunctionTestCase
 from tests.test_bridgepoint.utils import prebuild_docstring
 
 from xtuml import navigate_one as one
+from bridgepoint import prebuild
 
 
 class TestConstLiterals(PrebuildFunctionTestCase):
@@ -248,6 +249,59 @@ class TestConstLiterals(PrebuildFunctionTestCase):
         v_lbo = one(v_val).V_LBO[801]()
         self.assertEqual(v_lbo.Value, 'FALSE')
         
+    @prebuild_docstring
+    def test_enum(self):
+        '''return DayOfWeek::Monday;'''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+        
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 1)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 24)
+        
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'DayOfWeek')
+        
+        s_enum = one(v_val).V_LEN[801].S_ENUM[824]()
+        self.assertEqual(s_enum.Name, 'Monday')
+
+    @prebuild_docstring
+    def test_named_string(self):
+        '''return CNST::STR;'''
+        act_ret = self.metamodel.select_one('ACT_RET')
+        self.assertIsNotNone(act_ret)
+        
+        act_smt = one(act_ret).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_ret).V_VAL[668]()
+        self.assertEqual(v_val.isLValue, False)
+        self.assertEqual(v_val.isImplicit, False)
+        self.assertEqual(v_val.LineNumber, 1)
+        self.assertEqual(v_val.StartPosition, 8)
+        self.assertEqual(v_val.EndPosition, 16)
+        
+        s_dt = one(v_val).S_DT[820]()
+        self.assertEqual(s_dt.Name, 'string')
+        
+        cnst_syc = one(v_val).V_SCV[801].CNST_SYC[850]()
+        self.assertEqual(cnst_syc.Name, 'STR')
+
+    def test_unknown_named_const(self):
+        s_sync = self.metamodel.select_any('S_SYNC')
+        s_sync.Action_Semantics_internal = 'return CNST::MISS_SPELLED;'
+        s_sync.Suc_Pars = 1
+
+        self.assertRaises(Exception,
+                          prebuild.prebuild_model,
+                          self.metamodel)
+
         
 if __name__ == "__main__":
     import logging

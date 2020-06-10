@@ -1097,18 +1097,34 @@ class ActionPrebuilder(xtuml.tools.Walker):
         
         return v_val
     
-    def accept_EnumNode(self, node):
+    def accept_EnumOrNamedConstantNode(self, node):
         s_dt = self.s_dt(node.namespace)
         while one(s_dt).S_UDT[17]():
             s_dt = one(s_dt).S_UDT[17].S_DT[18]()
-            
+
         s_enum = one(s_dt).S_EDT[17].S_ENUM[27](where(name=node.name))
-        v_val = self.v_val(node)
-        v_len = self.new('V_LEN')
+        cnst_csp = self.any('CNST_CSP', where(InformalGroupName=node.namespace))
+        cnst_syc = one(cnst_csp).CNST_SYC[1504](where(Name=node.name))
+            
+        if s_enum:
+            v_val = self.v_val(node)
+            v_len = self.new('V_LEN')
         
-        relate(v_val, s_dt, 820)
-        relate(v_len, v_val, 801)
-        relate(v_len, s_enum, 824)
+            relate(v_val, s_dt, 820)
+            relate(v_len, v_val, 801)
+            relate(v_len, s_enum, 824)
+
+        elif cnst_syc:
+            s_dt = one(cnst_syc).S_DT[1500]()
+            v_val = self.v_val(node)
+            v_scv = self.new('V_SCV')
+            
+            relate(v_val, v_scv, 801)
+            relate(v_val, s_dt, 820)
+            relate(v_scv, cnst_syc, 850)
+
+        else:
+            raise Exception("Unknown identifier '%s::%s'" % (node.namespace, node.name))
         
         return v_val
     

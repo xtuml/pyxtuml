@@ -762,7 +762,7 @@ class BooleanNode(Node):
         self.value = value
 
 
-class EnumNode(Node):
+class EnumOrNamedConstantNode(Node):
     namespace = None
     name = None
     
@@ -1994,10 +1994,10 @@ class OALParser(object):
         p[0] = BooleanNode(value=p[1])
     
     @track_production
-    def p_constant_enum(self, p):
+    def p_enum_or_named_constant(self, p):
         '''constant : namespace DOUBLECOLON identifier'''
-        p[0] = EnumNode(namespace=p[1],
-                        name=p[3])
+        p[0] = EnumOrNamedConstantNode(namespace=p[1],
+                                       name=p[3])
 
     @track_production
     def p_unary_operator(self, p):

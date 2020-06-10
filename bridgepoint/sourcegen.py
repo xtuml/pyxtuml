@@ -458,7 +458,8 @@ class ActionTextGenWalker(Walker):
 
     def accept_V_SCV(self, inst):
         cnst_syc = one(inst).CNST_SYC[850]()
-        self.buf(cnst_syc.Name)
+        cnst_csp = one(cnst_syc).CNST_CSP[1504]()
+        self.buf(cnst_csp.InformalGroupName, '::', cnst_syc.Name)
         
     def accept_SPR_PEP(self, inst):
         c_po = one(inst).C_P[4501].C_IR[4009].C_PO[4016]()

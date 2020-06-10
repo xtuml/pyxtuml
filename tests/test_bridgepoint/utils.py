@@ -23,6 +23,8 @@ from bridgepoint import sourcegen
 from bridgepoint import prebuild
 from bridgepoint import ooaofooa
 
+from xtuml import where_eq as where
+
 
 class CompareAST(unittest.TestCase):
     '''
@@ -253,7 +255,7 @@ class CompareAST(unittest.TestCase):
     def compare_StringNode(self, x, y):
         self.assertEqual(x.value, y.value)
 
-    def compare_EnumNode(self, x, y):
+    def compare_EnumOrNamedConstantNode(self, x, y):
         self.assertEqual(x.namespace, y.namespace)
         self.assertEqual(x.name, y.name)
             
@@ -395,6 +397,28 @@ class PrebuildFunctionTestCase(CompareAST):
         xtuml.relate(s_dt3, pe_pe4, 8001)
         xtuml.relate(s_irdt3, s_dt3, 17)
         xtuml.relate(s_irdt3, o_obj, 123)
+
+        pe_pe = self.metamodel.new('PE_PE')
+        cnst_csp = self.metamodel.new('CNST_CSP', InformalGroupName='CNST')
+        cnst_syc = self.metamodel.new('CNST_SYC', Name='STR', Value='str')
+        cnst_lfsc = self.metamodel.new('CNST_LFSC')
+        cnst_lsc = self.metamodel.new('CNST_LSC', Value=cnst_syc.Value)
+        s_dt = self.metamodel.select_any('S_DT', where(Name='string'))
+
+        xtuml.relate(cnst_csp, pe_pe, 8001)
+        xtuml.relate(cnst_syc, s_dt, 1500)
+        xtuml.relate(cnst_syc, cnst_csp, 1504)
+        xtuml.relate(cnst_syc, cnst_lfsc, 1502)
+        xtuml.relate(cnst_lsc, cnst_lfsc, 1503)
+
+        pe_pe = self.metamodel.new('PE_PE')
+        s_dt = self.metamodel.new('S_DT', Name='DayOfWeek')
+        s_edt = self.metamodel.new('S_EDT')
+        s_enum = self.metamodel.new('S_ENUM', Name='Monday')
+
+        xtuml.relate(s_dt, pe_pe, 8001)
+        xtuml.relate(s_dt, s_edt, 17)
+        xtuml.relate(s_enum, s_edt, 27)
 
     def tearDown(self):
         del self.metamodel
