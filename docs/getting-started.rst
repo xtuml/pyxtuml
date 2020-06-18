@@ -26,12 +26,14 @@ If you would like to use the most recent changes that might not have made it
 into a release yet, you can bypass pypi and install from github directly:
 
 ::
+
     $ python -m pip install git+https://github.com/xtuml/pyxtuml.git
    
 You could also fetch the source code from github and manually,
 which also allows you to run test cases:
 
 ::
+
     $ git clone https://github.com/xtuml/pyxtuml.git
     $ python pyxtuml/setup.py test
 
