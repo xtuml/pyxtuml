@@ -64,7 +64,7 @@ class Domain(xtuml.MetaModel):
 
 def is_contained_in(pe_pe, root):
     '''
-    Determine if a PE_PE is contained within a EP_PKG or a C_C.
+    Determine if a PE_PE is contained within a EP_PKG, EP_PKGREF, or a C_C.
     '''
     if not pe_pe:
         return False
@@ -83,9 +83,12 @@ def is_contained_in(pe_pe, root):
     
     elif is_contained_in(c_c, root):
         return True
-    
-    else:
-        return False
+
+    for ep_pkg in many(ep_pkg).EP_PKG[1402, 'is referenced by']():
+        if is_contained_in(ep_pkg, root):
+            return True
+
+    return False
     
 
 def is_global(pe_pe):
