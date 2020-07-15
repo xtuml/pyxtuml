@@ -19,17 +19,17 @@
 import os
 import unittest
 
-import bridgepoint.consistency_check
+import bridgepoint.consistency_checker
 
 
 class TestConcistencyCLI(unittest.TestCase):
     '''
-    Test suite for the bridgepoint.consistency_check 
+    Test suite for the bridgepoint.consistency_checker 
     command line interface.
     '''
     def main(self, *args):
         try:
-            return bridgepoint.consistency_check.main(list(args))
+            return bridgepoint.consistency_checker.main(list(args))
         except SystemExit as e:
             return e.code
     
