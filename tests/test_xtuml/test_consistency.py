@@ -20,7 +20,7 @@ import os
 import unittest
 import bridgepoint
 
-import xtuml.consistency_check
+import xtuml.consistency_checker
 
 
 class TestConcistency(unittest.TestCase):
@@ -104,7 +104,7 @@ class TestConcistencyCLI(unittest.TestCase):
     '''
     def main(self, *args):
         try:
-            return xtuml.consistency_check.main(list(args))
+            return xtuml.consistency_checker.main(list(args))
         except SystemExit as e:
             return e.code
     
