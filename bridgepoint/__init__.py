@@ -27,3 +27,20 @@ from .sourcegen import gen_text_action
 from .ooaofooa import ModelLoader
 from .ooaofooa import load_metamodel
 from .ooaofooa import load_component
+
+
+#
+# Suppress false import warning when invoking the command line interfaces:
+#    python3 -m bridgepoint.consistency_check
+#    python3 -m bridgepoint.interpret
+#    python3 -m bridgepoint.oal
+#    python3 -m bridgepoint.prebuild
+#
+# For details, see http://bugs.python.org/issue27487
+#
+import warnings
+import sys
+
+if not sys.warnoptions: # Overridable with -W flag
+    warnings.filterwarnings('ignore', category=RuntimeWarning, module='runpy')
+

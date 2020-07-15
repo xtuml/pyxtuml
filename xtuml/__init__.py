@@ -86,3 +86,15 @@ from .meta import reverse_order_by
 from .consistency_check import check_association_integrity
 from .consistency_check import check_uniqueness_constraint
 from .consistency_check import check_subtype_integrity
+
+
+#
+# Suppress false import warning when invoking python3 -m xtuml.consistency_check.
+# For details, see http://bugs.python.org/issue27487
+#
+import warnings
+import sys
+
+if not sys.warnoptions: # Overridable with -W flag
+    warnings.filterwarnings('ignore', category=RuntimeWarning, module='runpy')
+
