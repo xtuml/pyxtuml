@@ -2029,30 +2029,4 @@ def parse(action_code, label='<string>'):
     return parser.text_input(action_code + '\n', label)
 
 
-if __name__ == '__main__':
-    import sys
-    import xtuml.tools
-    logging.basicConfig(level=logging.WARN)
-    
-    print ('Enter the character stream below. Press Ctrl-D to begin parsing.')
-    print ('')
-    s = sys.stdin.read()
-    
-    print ('--------- Token Stream ----------')
-    parser = OALParser()
-    lexer = lex.lex(module=parser)
-    lexer.input(s)
-    while True:
-        tok = lexer.token()
-        if not tok:
-            break
-        print(tok)
-
-    print ('--------- Syntax Tree ----------')
-    root = parse(s)
-    w = xtuml.tools.Walker()
-    w.visitors.append(xtuml.tools.NodePrintVisitor())
-    w.accept(root)
-
-
     
