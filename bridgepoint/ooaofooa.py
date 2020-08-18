@@ -61,6 +61,8 @@ class Domain(xtuml.MetaModel):
         except:
             raise OoaOfOoaException('Unknown symbol %s' % name)
 
+    __getattr__ = find_symbol
+
 
 def is_contained_in(pe_pe, root):
     '''

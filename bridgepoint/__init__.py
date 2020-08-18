@@ -16,8 +16,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
-from bridgepoint import imp
-imp.install()
+import sys
 
 from .prebuild import prebuild_action
 from .prebuild import prebuild_model
@@ -27,3 +26,9 @@ from .sourcegen import gen_text_action
 from .ooaofooa import ModelLoader
 from .ooaofooa import load_metamodel
 from .ooaofooa import load_component
+
+# loading ooaofooa models with import sytnax is only
+# supported when running python 3.
+if sys.version_info >= (3, 0):
+    from bridgepoint import imp
+    imp.install()
