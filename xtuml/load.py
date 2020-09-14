@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 '''
 Loading support for xtUML models (based on sql).
@@ -55,27 +70,27 @@ def deserialize_value(ty, value):
         elif value.upper() == 'TRUE':
             return True
         else:
-            raise ParsingException("Unable to convert '%s' to a boolean" % value)
+            return None
     
     elif uty == 'INTEGER': 
-        return int(value)
+        if '"' in value:
+            return uuid.UUID(value[1:-1]).int
+        else:
+            return int(value)
     
     elif uty == 'REAL': 
         return float(value)
     
     elif uty == 'STRING': 
-        return value.replace("''", "'")[1:-1]
+        return value[1:-1].replace("''", "'")
     
     elif uty == 'UNIQUE_ID': 
         if '"' in value:
             return uuid.UUID(value[1:-1]).int
         else:
             return int(value)
+
     
-    else:
-        raise ParsingException("Unknown type named '%s'" % ty)
-
-
 class ParsingException(Exception):
     '''
     An exception that may be thrown while loading (and parsing) a metamodel.
@@ -83,21 +98,28 @@ class ParsingException(Exception):
     pass
 
 
-class CreateInstanceStmt(object):
+class Stmt(object):
+    offset = None
+    lineno = None
+    filename = None
+
+
+class CreateInstanceStmt(Stmt):
     
     def __init__(self, kind, values, names):
         self.kind = kind
         self.values = values
         self.names = names
 
-class CreateClassStmt(object):
+
+class CreateClassStmt(Stmt):
     
     def __init__(self, kind, attributes):
         self.kind = kind
         self.attributes = attributes
         
 
-class CreateAssociationStmt(object):
+class CreateAssociationStmt(Stmt):
     def __init__(self, rel_id, source_kind, source_cardinality, source_keys, 
                  source_phrase, target_kind, target_cardinality, target_keys,
                 target_phrase):
@@ -112,7 +134,7 @@ class CreateAssociationStmt(object):
         self.target_phrase = target_phrase
         
  
-class CreateUniqueStmt(object):
+class CreateUniqueStmt(Stmt):
     
     def __init__(self, kind, name, attributes):
         self.kind = kind
@@ -142,23 +164,24 @@ class ModelLoader(object):
     '''
     reserved = (
         'CREATE',
+        'FALSE',
+        'FROM',
+        'INDEX',
         'INSERT',
         'INTO',
-        'VALUES',
-        'TABLE',
-        'ROP',
-        'REF_ID',
-        'FROM',
-        'TO',
-        'PHRASE',
-        'UNIQUE',
-        'INDEX',
         'ON',
+        'PHRASE',
+        'REF_ID',
+        'ROP',
+        'TABLE',
+        'TO',
         'TRUE',
-        'FALSE'
+        'UNIQUE',
+        'VALUES'
     )
 
     tokens = reserved + (
+        'CARDINALITY',
         'COMMA',
         'FRACTION',
         'GUID',
@@ -169,8 +192,7 @@ class ModelLoader(object):
         'RPAREN',
         'RELID',
         'SEMICOLON',
-        'STRING',
-        'CARDINALITY',
+        'STRING'
     )
 
     # A string containing ignored characters (spaces and tabs).
@@ -188,12 +210,6 @@ class ModelLoader(object):
                                 module=self,
                                 outputdir=os.path.dirname(__file__),
                                 tabmodule='xtuml.__xtuml_parsetab')
-
-    def build_parser(self):
-        '''
-        This method is deprecated.
-        '''
-        pass
     
     def input(self, data, name='<string>'):
         '''
@@ -208,7 +224,7 @@ class ModelLoader(object):
                         lextab="xtuml.__xtuml_lextab")
         lexer.filename = name
         logger.debug('parsing %s' % name)
-        s = self.parser.parse(lexer=lexer, input=data)
+        s = self.parser.parse(lexer=lexer, input=data, tracking=1)
         self.statements.extend(s)
 
     def filename_input(self, filename):
@@ -239,18 +255,21 @@ class ModelLoader(object):
         input.
         '''
         for stmt in self.statements:
-            if isinstance(stmt, CreateAssociationStmt):
-                metamodel.define_association(stmt.rel_id, 
-                                             stmt.source_kind, 
-                                             stmt.source_keys,
-                                             'M' in stmt.source_cardinality,
-                                             'C' in stmt.source_cardinality,
-                                             stmt.source_phrase,
-                                             stmt.target_kind, 
-                                             stmt.target_keys,
-                                             'M' in stmt.target_cardinality,
-                                             'C' in stmt.target_cardinality,
-                                             stmt.target_phrase)
+            if not isinstance(stmt, CreateAssociationStmt):
+                continue
+            
+            ass = metamodel.define_association(stmt.rel_id,
+                                         stmt.source_kind,
+                                         stmt.source_keys,
+                                         'M' in stmt.source_cardinality,
+                                         'C' in stmt.source_cardinality,
+                                         stmt.source_phrase,
+                                         stmt.target_kind,
+                                         stmt.target_keys,
+                                         'M' in stmt.target_cardinality,
+                                         'C' in stmt.target_cardinality,
+                                         stmt.target_phrase)
+            ass.formalize()
 
     def populate_unique_identifiers(self, metamodel):
         '''
@@ -288,18 +307,23 @@ class ModelLoader(object):
                                                  names, stmt.values)
             
         metaclass = metamodel.find_metaclass(stmt.kind)
-        args = list()
-            
         if len(metaclass.attributes) != len(stmt.values):
-            logger.warn('schema mismatch while loading an instance of %s',
-                        stmt.kind)
+            logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
                 
+        inst = metamodel.new(stmt.kind)
         for attr, value in zip(metaclass.attributes, stmt.values):
-            _, ty = attr
-            value = deserialize_value(ty, value) 
-            args.append(value)
-            
-        metamodel.new(stmt.kind, *args)
+            name, ty = attr
+            py_value = deserialize_value(ty, value)
+            if py_value is None:
+                raise ParsingException("%s:%d:unable to deserialize "\
+                                       "%s to a %s" % (stmt.filename,
+                                                       stmt.lineno,
+                                                       value,
+                                                       ty))
+
+            inst.__dict__[name] = py_value
+        
+        return inst
     
     @staticmethod
     def _populate_instance_with_named_arguments(metamodel, stmt):
@@ -317,22 +341,27 @@ class ModelLoader(object):
         inst_unames = [name.upper() for name in stmt.names]
         
         if set(inst_unames) - set(schema_unames):
-            logger.warn('schema mismatch while loading an instance of %s',
-                        stmt.kind)
+            logger.warn('%s:%d:schema mismatch' % (stmt.filename, stmt.lineno))
             
-        args = list()
+        inst = metamodel.new(stmt.kind)
         for name, ty in metaclass.attributes:
             uname = name.upper()
             if uname in inst_unames:
                 idx = inst_unames.index(uname)
                 value = deserialize_value(ty, stmt.values[idx])
+                if value is None:
+                    raise ParsingException("%s:%d:unable to deserialize "\
+                                           "%s to a %s" % (stmt.filename,
+                                                           stmt.lineno,
+                                                           value,
+                                                           ty))
             else:
                 value = None
-                
-            args.append(value)
-                
-        metamodel.new(stmt.kind, *args)
+            
+            inst.__dict__[name] = value
 
+        return inst
+    
     def populate_instances(self, metamodel):
         '''
         Populate a *metamodel* with instances previously encountered from
@@ -343,20 +372,65 @@ class ModelLoader(object):
                 continue
             
             if stmt.names:
-                self._populate_instance_with_named_arguments(metamodel, stmt)
+                fn = self._populate_instance_with_named_arguments
             else:
-                self._populate_instance_with_positional_arguments(metamodel,
-                                                                  stmt)
+                fn = self._populate_instance_with_positional_arguments
+            
+            fn(metamodel, stmt)
+    
+    def populate_connections(self, metamodel):
+        '''
+        Populate links in a *metamodel* with connections between them.
+        '''
+        storage = dict()
+        for ass in metamodel.associations:
+            source_class = ass.source_link.to_metaclass
+            target_class = ass.target_link.to_metaclass
+
+            if target_class not in storage:
+                storage[target_class] = dict()
+            
+            link_key = frozenset(ass.source_link.key_map.values())
+            if link_key not in storage[target_class]:
+                storage[target_class][link_key] = dict()
+                for other_inst in target_class.storage:
+                    inst_key = ass.source_link.compute_index_key(other_inst)
+                    if inst_key is None:
+                        continue
+                    
+                    if inst_key not in storage[target_class][link_key]:
+                        storage[target_class][link_key][inst_key] = xtuml.OrderedSet()
+
+                    storage[target_class][link_key][inst_key].add(other_inst)
+
+            for inst in source_class.storage:
+                inst_key = ass.source_link.compute_lookup_key(inst)
+                if inst_key is None:
+                    continue
                 
+                if inst_key not in storage[target_class][link_key]:
+                    continue
+                
+                for other_inst in storage[target_class][link_key][inst_key]:
+                    ass.source_link.connect(other_inst, inst, check=False)
+                    ass.target_link.connect(inst, other_inst, check=False)
+
+        for inst in metamodel.instances:
+            metaclass = xtuml.get_metaclass(inst)
+            for attr in metaclass.referential_attributes:
+                if attr in inst.__dict__:
+                    delattr(inst, attr)
+
     def populate(self, metamodel):
         '''
         Populate a *metamodel* with entities previously encountered from input.
         '''
         self.populate_classes(metamodel)
-        self.populate_associations(metamodel)
         self.populate_unique_identifiers(metamodel)
+        self.populate_associations(metamodel)
         self.populate_instances(metamodel)
-        
+        self.populate_connections(metamodel)
+
     def build_metamodel(self, id_generator=None):
         '''
         Build and return a *xtuml.MetaModel* containing previously loaded input.
@@ -470,6 +544,9 @@ class ModelLoader(object):
                   | create_index_statement SEMICOLON
         '''
         p[0] = p[1]
+        p[0].offset = p.lexpos(1)
+        p[0].lineno = p.lineno(1)
+        p[0].filename = p.lexer.filename
 
     def p_create_table_statement(self, p):
         '''create_table_statement : CREATE TABLE identifier LPAREN attribute_sequence RPAREN'''

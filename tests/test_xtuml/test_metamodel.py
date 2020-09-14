@@ -1,11 +1,28 @@
 # encoding: utf-8
-# Copyright (C) 2014-2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 
 import xtuml
 from bridgepoint import ooaofooa
 from xtuml import where_eq as where
+from xtuml import order_by
+from xtuml import reverse_order_by
 
 
 class TestModel(unittest.TestCase):
@@ -40,11 +57,53 @@ class TestModel(unittest.TestCase):
         q = m.select_many('S_EDT')
         self.assertIsInstance(q, xtuml.QuerySet)
         self.assertTrue(len(q) == 0)
+
+    def test_navigate_many_where(self):
+        m = self.metamodel
+        s_cdt = m.select_many('S_CDT')
+        c_dt = xtuml.navigate_many(s_cdt).S_DT[17](where(Name='integer'))
+        self.assertEqual(1, len(c_dt))
         
     def test_select_any_where(self):
         m = self.metamodel
         inst = m.select_any('S_DT', where(Name='void'))
         self.assertEqual(inst.Name, 'void')
+
+    def test_select_many_ordered_by(self):
+        m = self.metamodel
+        q = m.select_many('S_DT', order_by('Name', 'DT_ID'))
+        prev_inst = None
+        for inst in q:
+            if prev_inst is None:
+                continue
+            
+            self.assertTrue(getattr(inst, 'Name') > getattr(prev_inst, 'Name') or
+                            (getattr(inst, 'Name') == getattr(prev_inst, 'Name') and
+                             getattr(inst, 'DT_ID') >= getattr(prev_inst, 'DT_ID')))
+            prev_inst = inst
+
+    def test_select_many_reverse_ordered_by(self):
+        m = self.metamodel
+        q1 = m.select_many('S_DT', order_by('Name', 'DT_ID'))
+        q2 = m.select_many('S_DT', reverse_order_by('Name', 'DT_ID'))
+        self.assertEqual(q1, reversed(q2))
+
+    def test_select_many_filter_ordered_by(self):
+        m = self.metamodel
+        s_dt = m.select_one('S_DT', where(Name='void'))
+        filt = lambda inst: inst.DT_ID > s_dt.DT_ID
+        
+        q = m.select_many('S_DT', filt, order_by('Name'))
+        self.assertEqual(q.first.Name, 'boolean')
+        self.assertEqual(q.last.Name, 'unique_id')
+
+    def test_select_one_ordered_by(self):
+        m = self.metamodel
+        s_dt = m.select_one('S_DT', order_by('Name'))
+        self.assertEqual(s_dt.Name, 'boolean')
+
+        s_dt = m.select_one('S_DT', reverse_order_by('Name'))
+        self.assertEqual(s_dt.Name, 'void')
         
     def test_empty(self):
         m = self.metamodel
@@ -114,24 +173,26 @@ class TestModel(unittest.TestCase):
         metaclass = self.metamodel.find_metaclass('aa')
         metaclass.append_attribute('Next_Id', 'unique_id')
         
-        self.metamodel.define_association(rel_id='R1', 
-                                          source_kind='AA', 
-                                          source_keys=['ID'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='prev',
-                                          target_kind='aa',
-                                          target_keys=['next_id'],
-                                          target_many=False,
-                                          target_conditional=False,
-                                          target_phrase='next')
-                                          
+        ass = self.metamodel.define_association(rel_id='R1', 
+                                                source_kind='AA', 
+                                                source_keys=['ID'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='prev',
+                                                target_kind='aa',
+                                                target_keys=['next_id'],
+                                                target_many=False,
+                                                target_conditional=False,
+                                                target_phrase='next')
         next_id = None
         for inst in self.metamodel.select_many('aa'):
             inst.next_ID = next_id
             next_id = inst.Id
+        
+        ass.batch_relate()
+        ass.formalize()
             
-        self.assertTrue(xtuml.navigate_one(inst).aa[1, 'prev'].AA[1, 'prev']())
+        self.assertTrue(xtuml.navigate_one(inst).aa[1, 'next'].AA[1, 'next']())
         
     def test_unknown_type(self):
         self.metamodel.define_class('A', [('Id', '<invalid type>')])
@@ -156,7 +217,10 @@ class TestModel(unittest.TestCase):
         
     def test_delete(self):
         inst = self.metamodel.select_any('S_DT', where(Name='void'))
+        self.assertTrue(xtuml.navigate_one(inst).PE_PE[8001]())
+        
         xtuml.delete(inst)
+        self.assertFalse(xtuml.navigate_one(inst).PE_PE[8001]())
         
         inst = self.metamodel.select_any('S_DT', where(Name='void'))
         self.assertFalse(inst)
@@ -211,50 +275,52 @@ class TestDefineAssociations(unittest.TestCase):
                                           ('Next_Id', 'unique_id'),
                                           ('Name', 'string')])
         
-        self.metamodel.define_association(rel_id='R1', 
-                                          source_kind='A', 
-                                          source_keys=['Id'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='prev',
-                                          target_kind='A',
-                                          target_keys=['Next_Id'],
-                                          target_many=False,
-                                          target_conditional=False,
-                                          target_phrase='next')
+        ass = self.metamodel.define_association(rel_id='R1', 
+                                                source_kind='A', 
+                                                source_keys=['Id'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='prev',
+                                                target_kind='A',
+                                                target_keys=['Next_Id'],
+                                                target_many=False,
+                                                target_conditional=False,
+                                                target_phrase='next')
+        ass.formalize()
         
         first = self.metamodel.new('A', Name="First")
         second = self.metamodel.new('A', Name="Second")
 
         self.assertTrue(xtuml.relate(first, second, 1, 'prev'))
 
-        inst = xtuml.navigate_one(first).A[1, 'next']()
+        inst = xtuml.navigate_one(first).A[1, 'prev']()
         self.assertEqual(inst.Name, second.Name)
 
-        inst = xtuml.navigate_one(first).A[1, 'prev']()
+        inst = xtuml.navigate_one(first).A[1, 'next']()
         self.assertIsNone(inst)
         
-        inst = xtuml.navigate_one(second).A[1, 'prev']()
+        inst = xtuml.navigate_one(second).A[1, 'next']()
         self.assertEqual(inst.Name, first.Name)
         
-        inst = xtuml.navigate_one(second).A[1, 'next']()
+        inst = xtuml.navigate_one(second).A[1, 'prev']()
         self.assertIsNone(inst)
 
     def test_one_to_many(self):
         self.metamodel.define_class('A', [('Id', 'unique_id')])
         self.metamodel.define_class('B', [('Id', 'unique_id'), ('A_Id', 'unique_id')])
-        self.metamodel.define_association(rel_id=1, 
-                                          source_kind='A', 
-                                          source_keys=['Id'], 
-                                          source_many=False, 
-                                          source_conditional=False,
-                                          source_phrase='',
-                                          target_kind='B',
-                                          target_keys=['A_Id'],
-                                          target_many=True,
-                                          target_conditional=False,
-                                          target_phrase='')
         
+        ass = self.metamodel.define_association(rel_id=1, 
+                                                source_kind='A', 
+                                                source_keys=['Id'], 
+                                                source_many=False, 
+                                                source_conditional=False,
+                                                source_phrase='',
+                                                target_kind='B',
+                                                target_keys=['A_Id'],
+                                                target_many=True,
+                                                target_conditional=False,
+                                                target_phrase='')
+        ass.formalize()
         a = self.metamodel.new('A')
         b = self.metamodel.new('B')
         self.assertTrue(xtuml.relate(a, b, 1))

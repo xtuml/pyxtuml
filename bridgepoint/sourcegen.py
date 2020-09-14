@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
 
@@ -78,14 +93,14 @@ class ActionTextGenWalker(Walker):
         if self._lvl:
             self.buf_linebreak()
         
-        first_filter = lambda sel: (not one(sel).ACT_SMT[661, 'succeeds']() and
+        first_filter = lambda sel: (not one(sel).ACT_SMT[661, 'precedes']() and
                                     not one(sel).ACT_EL[603]() and
                                     not one(sel).ACT_E[603]())
         
         act_smt = one(inst).ACT_SMT[602](first_filter)
         while act_smt:
             self.accept(act_smt)
-            act_smt = one(act_smt).ACT_SMT[661, 'precedes']()
+            act_smt = one(act_smt).ACT_SMT[661, 'succeeds']()
             
         self._lvl -= 1
         self.buf_linebreak()
@@ -209,7 +224,7 @@ class ActionTextGenWalker(Walker):
         if inst.Rel_Phrase:
             self.buf('.', inst.Rel_Phrase)
         self.buf(']')
-        self.accept(one(inst).ACT_LNK[604, 'succeeds']())
+        self.accept(one(inst).ACT_LNK[604, 'precedes']())
         
     def accept_ACT_AI(self, inst):
         if one(inst).V_VAL[609].V_MSV[801]():
@@ -263,7 +278,7 @@ class ActionTextGenWalker(Walker):
         s_sync = one(inst).S_SYNC[675]()
         self.buf('::', s_sync.Name)
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[669](first_filter))
         self.buf(')')
         
@@ -272,7 +287,7 @@ class ActionTextGenWalker(Walker):
         s_ee = one(s_brg).S_EE[19]()
         self.buf('bridge ', s_ee.Key_Lett, '::', s_brg.Name)
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[628](first_filter))
         self.buf(')')
         
@@ -280,7 +295,7 @@ class ActionTextGenWalker(Walker):
         self.accept(one(inst).SPR_PO[680].SPR_PEP[4503]())
         self.accept(one(inst).SPR_RO[657].SPR_REP[4502]())
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[679](first_filter))
         self.buf(')')
         
@@ -288,7 +303,7 @@ class ActionTextGenWalker(Walker):
         self.accept(one(inst).SPR_PS[663].SPR_PEP[4503]())
         self.accept(one(inst).SPR_RS[660].SPR_REP[4502]())
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[662](first_filter))
         self.buf(')')
         
@@ -305,7 +320,7 @@ class ActionTextGenWalker(Walker):
             self.buf('.', o_tfr.Name)
             
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[627](first_filter))
         self.buf(')')
         
@@ -381,12 +396,12 @@ class ActionTextGenWalker(Walker):
         self.buf(')')
 
     def accept_V_PAR(self, inst):
-        if one(inst).V_PAR[816, 'precedes']() is not None:
+        if one(inst).V_PAR[816, 'succeeds']() is not None:
             self.buf(', ')
             
         self.buf(inst.Name, ': ')
         self.accept(one(inst).V_VAL[800]())
-        self.accept(one(inst).V_PAR[816, 'succeeds']())
+        self.accept(one(inst).V_PAR[816, 'precedes']())
 
     def accept_V_EDV(self, inst):
         self.buf('rcvd_evt.')
@@ -403,7 +418,7 @@ class ActionTextGenWalker(Walker):
         s_sync = one(inst).S_SYNC[827]()
         self.buf('::', s_sync.Name)
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[817](first_filter))
         self.buf(')')
         
@@ -412,7 +427,7 @@ class ActionTextGenWalker(Walker):
         s_ee = one(s_brg).S_EE[19]()
         self.buf('bridge ', s_ee.Key_Lett, '::', s_brg.Name)
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[810](first_filter))
         self.buf(')')
         
@@ -429,7 +444,7 @@ class ActionTextGenWalker(Walker):
             self.buf('.', o_tfr.Name)
             
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[811](first_filter))
         self.buf(')')
         
@@ -437,9 +452,14 @@ class ActionTextGenWalker(Walker):
         self.accept(one(inst).SPR_PEP[841]())
         self.accept(one(inst).SPR_REP[845]())
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[842](first_filter))
         self.buf(')')
+
+    def accept_V_SCV(self, inst):
+        cnst_syc = one(inst).CNST_SYC[850]()
+        cnst_csp = one(cnst_syc).CNST_CSP[1504]()
+        self.buf(cnst_csp.InformalGroupName, '::', cnst_syc.Name)
         
     def accept_SPR_PEP(self, inst):
         c_po = one(inst).C_P[4501].C_IR[4009].C_PO[4016]()
@@ -460,7 +480,7 @@ class ActionTextGenWalker(Walker):
         self.accept(one(inst).E_GES[701]())
 
         self.buf('(')
-        first_filter = lambda sel: one(sel).V_PAR[816, 'precedes']() is None
+        first_filter = lambda sel: one(sel).V_PAR[816, 'succeeds']() is None
         self.accept(any(inst).V_PAR[700](first_filter))
         self.buf(')')
         

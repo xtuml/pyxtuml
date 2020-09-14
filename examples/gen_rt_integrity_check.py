@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Generate OAL actions that checks for model integrity violations at runtime.
 
@@ -249,7 +264,7 @@ def main():
                       action="store", default=None)
     
     parser.add_option("-o", "--output", dest='output', metavar="PATH",
-                      help="save sql schema to PATH (required)",
+                      help="save sql model instances to PATH (required)",
                       action="store", default=None)
     
     parser.add_option("-v", "--verbosity", dest='verbosity', action="count",

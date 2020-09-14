@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 import xtuml
@@ -26,13 +41,13 @@ class TestSortReflexive(unittest.TestCase):
             prev = inst
             
         inst_set = xtuml.navigate_many(act_blk).ACT_SMT[602]()
-        inst_set = xtuml.sort_reflexive(inst_set, 661, 'precedes')
+        inst_set = xtuml.sort_reflexive(inst_set, 661, 'succeeds')
         self.assertEqual(len(inst_set), 10)
         for idx, inst in enumerate(inst_set):
             self.assertEqual(inst.LineNumber, idx)
         
         inst_set = xtuml.navigate_many(act_blk).ACT_SMT[602]()
-        inst_set = xtuml.sort_reflexive(inst_set, 661, 'succeeds')
+        inst_set = xtuml.sort_reflexive(inst_set, 661, 'precedes')
         self.assertEqual(len(inst_set), 10)
         for idx, inst in enumerate(inst_set):
             self.assertEqual(inst.LineNumber, 9 - idx)
@@ -66,7 +81,7 @@ class TestSortReflexive(unittest.TestCase):
         self.assertTrue(xtuml.relate(p4, p1, 55, 'precedes'))
         
         inst_set = self.m.select_many('S_BPARM')
-        inst_set = xtuml.sort_reflexive(inst_set, 55, 'precedes')
+        inst_set = xtuml.sort_reflexive(inst_set, 55, 'succeeds')
 
         self.assertEqual(len(inst_set), 4)
         for inst1, inst2 in zip(inst_set, [p1, p2, p3, p4]):

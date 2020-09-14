@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2014-2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 import xtuml
@@ -7,6 +22,8 @@ from bridgepoint import oal
 from bridgepoint import sourcegen
 from bridgepoint import prebuild
 from bridgepoint import ooaofooa
+
+from xtuml import where_eq as where
 
 
 class CompareAST(unittest.TestCase):
@@ -63,13 +80,11 @@ class CompareAST(unittest.TestCase):
             self.compare(x, y)
             
     def compare_GenerateInstanceEventNode(self, x, y):
-        self.assertEqual(x.variable_name, y.variable_name)
         for x, y in zip(x.children, y.children):
             self.compare(x, y)
             
     def compare_CreateInstanceEventNode(self, x, y):
         self.assertEqual(x.variable_name, y.variable_name)
-        self.assertEqual(x.to_variable_name, y.to_variable_name)
         for x, y in zip(x.children, y.children):
             self.compare(x, y)
           
@@ -240,7 +255,7 @@ class CompareAST(unittest.TestCase):
     def compare_StringNode(self, x, y):
         self.assertEqual(x.value, y.value)
 
-    def compare_EnumNode(self, x, y):
+    def compare_EnumOrNamedConstantNode(self, x, y):
         self.assertEqual(x.namespace, y.namespace)
         self.assertEqual(x.name, y.name)
             
@@ -358,7 +373,53 @@ class PrebuildFunctionTestCase(CompareAST):
         
         s_dt = self.metamodel.select_any('S_DT', lambda sel: sel.Name == 'void')
         xtuml.relate(s_dt, s_sync, 25)
-        
+
+        pe_pe2 = self.metamodel.new('PE_PE')
+        o_obj = self.metamodel.new('O_OBJ')
+        o_obj.Key_Lett = 'OBJECT'
+        o_obj.Name = 'OBJECT'
+        xtuml.relate(o_obj, pe_pe2, 8001)
+
+        pe_pe3 = self.metamodel.new('PE_PE')
+        s_dt2 = self.metamodel.new('S_DT')
+        s_dt2.Name = 'inst_ref<OBJECT>'
+        s_irdt2 = self.metamodel.new('S_IRDT')
+        s_irdt2.isSet = False
+        xtuml.relate(s_dt2, pe_pe3, 8001)
+        xtuml.relate(s_irdt2, s_dt2, 17)
+        xtuml.relate(s_irdt2, o_obj, 123)
+
+        pe_pe4 = self.metamodel.new('PE_PE')
+        s_dt3 = self.metamodel.new('S_DT')
+        s_dt3.Name = 'inst_ref_set<OBJECT>'
+        s_irdt3 = self.metamodel.new('S_IRDT')
+        s_irdt3.isSet = True
+        xtuml.relate(s_dt3, pe_pe4, 8001)
+        xtuml.relate(s_irdt3, s_dt3, 17)
+        xtuml.relate(s_irdt3, o_obj, 123)
+
+        pe_pe = self.metamodel.new('PE_PE')
+        cnst_csp = self.metamodel.new('CNST_CSP', InformalGroupName='CNST')
+        cnst_syc = self.metamodel.new('CNST_SYC', Name='STR', Value='str')
+        cnst_lfsc = self.metamodel.new('CNST_LFSC')
+        cnst_lsc = self.metamodel.new('CNST_LSC', Value=cnst_syc.Value)
+        s_dt = self.metamodel.select_any('S_DT', where(Name='string'))
+
+        xtuml.relate(cnst_csp, pe_pe, 8001)
+        xtuml.relate(cnst_syc, s_dt, 1500)
+        xtuml.relate(cnst_syc, cnst_csp, 1504)
+        xtuml.relate(cnst_syc, cnst_lfsc, 1502)
+        xtuml.relate(cnst_lsc, cnst_lfsc, 1503)
+
+        pe_pe = self.metamodel.new('PE_PE')
+        s_dt = self.metamodel.new('S_DT', Name='DayOfWeek')
+        s_edt = self.metamodel.new('S_EDT')
+        s_enum = self.metamodel.new('S_ENUM', Name='Monday')
+
+        xtuml.relate(s_dt, pe_pe, 8001)
+        xtuml.relate(s_dt, s_edt, 17)
+        xtuml.relate(s_enum, s_edt, 27)
+
     def tearDown(self):
         del self.metamodel
         

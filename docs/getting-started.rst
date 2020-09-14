@@ -22,19 +22,20 @@ installed using pip:
 
     $ python -m pip install pyxtuml
 
-You could also fetch the source code from github and install it manually:
+If you would like to use the most recent changes that might not have made it
+into a release yet, you can bypass pypi and install from github directly:
+
+::
+
+    $ python -m pip install git+https://github.com/xtuml/pyxtuml.git
+   
+You could also fetch the source code from github and manually,
+which also allows you to run test cases:
 
 ::
 
     $ git clone https://github.com/xtuml/pyxtuml.git
-    $ cd pyxtuml
-    $ python setup.py install
-   
-Optionally, you can also execute a test suite:
-
-::
-
-    $ python setup.py test
+    $ python pyxtuml/setup.py test
 
 Usage example
 -------------

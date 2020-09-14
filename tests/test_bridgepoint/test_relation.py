@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 from tests.test_bridgepoint.utils import PrebuildFunctionTestCase
 from tests.test_bridgepoint.utils import prebuild_docstring
@@ -68,7 +83,7 @@ class TestRelation(PrebuildFunctionTestCase):
         relate a to b across R2;
         '''
         act_rel = self.metamodel.select_one('ACT_REL')
-        self.assertIsNone(act_rel.relationship_phrase)
+        self.assertFalse(act_rel.relationship_phrase)
         
         act_smt = one(act_rel).ACT_SMT[603]()
         self.assertIsNotNone(act_smt)
@@ -113,7 +128,7 @@ class TestRelation(PrebuildFunctionTestCase):
         relate a to b across R2 using c;
         '''
         act_rel = self.metamodel.select_one('ACT_RU')
-        self.assertIsNone(act_rel.relationship_phrase)
+        self.assertFalse(act_rel.relationship_phrase)
         
         act_smt = one(act_rel).ACT_SMT[603]()
         self.assertIsNotNone(act_smt)
@@ -165,7 +180,7 @@ class TestRelation(PrebuildFunctionTestCase):
         unrelate a from b across R2;
         '''
         act_unr = self.metamodel.select_one('ACT_UNR')
-        self.assertIsNone(act_unr.relationship_phrase)
+        self.assertFalse(act_unr.relationship_phrase)
         
         act_smt = one(act_unr).ACT_SMT[603]()
         self.assertIsNotNone(act_smt)
@@ -212,7 +227,7 @@ class TestRelation(PrebuildFunctionTestCase):
         unrelate a from b across R2 using c;
         '''
         act_unr = self.metamodel.select_one('ACT_URU')
-        self.assertIsNone(act_unr.relationship_phrase)
+        self.assertFalse(act_unr.relationship_phrase)
         
         act_smt = one(act_unr).ACT_SMT[603]()
         self.assertIsNotNone(act_smt)

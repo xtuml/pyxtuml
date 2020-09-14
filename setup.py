@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 import logging
 import unittest
 import sys
@@ -14,9 +29,6 @@ except ImportError:
     from distutils.core  import Command
     from distutils.command.build_py import build_py
 
-import xtuml
-from bridgepoint import oal
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -24,6 +36,9 @@ logging.basicConfig(level=logging.DEBUG)
 class BuildCommand(build_py):
     
     def run(self):
+        import xtuml
+        from bridgepoint import oal
+
         l = xtuml.ModelLoader()
         l.input('', name='<empty string>')
         l.build_metamodel()
@@ -54,23 +69,26 @@ class TestCommand(Command):
 
 
 setup(name='pyxtuml',
-      version=xtuml.version.release,
+      version='2.2.1', # ensure that this is the same as in xtuml.version
       description='Library for parsing, manipulating, and generating BridgePoint xtUML models',
-      author='John Törnblom',
+      author=u'John Törnblom',
       author_email='john.tornblom@gmail.com',
       url='https://github.com/xtuml/pyxtuml',
-      license='GPLv3',
+      license='LGPLv3+',
       classifiers=[
           'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
           'Topic :: Software Development :: Code Generators',
           'Topic :: Software Development :: Compilers',
-          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+          'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
           'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.5'],
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6'],
       keywords='xtuml bridgepoint',
       packages=['xtuml', 'bridgepoint'],
       requires=['ply'],
+      install_requires=['ply'],
+      setup_requires=['ply'],
       cmdclass={'build_py': BuildCommand,
                 'test': TestCommand}
       )

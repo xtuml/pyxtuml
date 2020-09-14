@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Check an xtuml model for association constraint violations in its metamodel.
 '''
@@ -19,7 +34,7 @@ def pretty_to_link(inst, link):
     '''
     values = ''
     prefix = ''
-    metaclass = inst.__metaclass__
+    metaclass = xtuml.get_metaclass(inst)
 
     for name, ty in metaclass.attributes:
         if name in link.key_map:
@@ -38,7 +53,7 @@ def pretty_from_link(inst, link):
     '''
     values = ''
     prefix = ''
-    metaclass = inst.__metaclass__
+    metaclass = xtuml.get_metaclass(inst)
     
     for name, ty in metaclass.attributes:
         if name in link.key_map:
@@ -56,7 +71,7 @@ def pretty_unique_identifier(inst, identifier):
     '''
     values = ''
     prefix = ''
-    metaclass = inst.__metaclass__
+    metaclass = xtuml.get_metaclass(inst)
     
     for name, ty in metaclass.attributes:
         if name in metaclass.identifying_attributes:
@@ -79,8 +94,12 @@ def check_uniqueness_constraint(m, kind=None):
     
     res = 0
     for metaclass in metaclasses:
+        id_map = dict()
+        for identifier in metaclass.indices:
+            id_map[identifier] = dict()
+                
         for inst in metaclass.select_many():
-            
+            # Check for null-values
             for name, ty in metaclass.attributes:
                 if name not in metaclass.identifying_attributes:
                     continue
@@ -92,20 +111,21 @@ def check_uniqueness_constraint(m, kind=None):
                     res += 1 
                     logger.warning('%s.%s is part of an identifier and is null' 
                                    % (metaclass.kind, name))
-            
-            
+
+            # Check uniqueness
             for identifier in metaclass.indices:
                 kwargs = dict()
                 for name in metaclass.indices[identifier]:
                     kwargs[name] = getattr(inst, name)
-                
-                where_clause = xtuml.where_eq(**kwargs)
-                s = metaclass.select_many(where_clause)
-                if len(s) > 1:
+
+                index_key = frozenset(kwargs.items())
+                if index_key in id_map[identifier]:
                     res += 1
                     id_string = pretty_unique_identifier(inst, identifier)
                     logger.warning('uniqueness constraint violation in %s, %s' 
                                    % (metaclass.kind, id_string))
+
+                id_map[identifier][index_key] = inst
 
     return res
 
@@ -156,8 +176,8 @@ def check_association_integrity(m, rel_id=None):
     res = 0
     for ass in m.associations:
         if rel_id in [ass.rel_id, None]:
-            res += check_link_integrity(m, ass.link)
-            res += check_link_integrity(m, ass.reversed_link)
+            res += check_link_integrity(m, ass.source_link)
+            res += check_link_integrity(m, ass.target_link)
 
     return res
 

@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 '''
 Parser for the Object Action Language (OAL). 
@@ -164,15 +179,15 @@ class GenerateCreatorEventNode(Node):
 
 class GenerateInstanceEventNode(Node):
     event_specification = None
-    variable_name = None
+    variable_access = None
     
-    def __init__(self, event_specification, variable_name):
+    def __init__(self, event_specification, variable_access):
         self.event_specification = event_specification
-        self.variable_name = variable_name
+        self.variable_access = variable_access
         
     @property
     def children(self):
-        return (self.event_specification,)
+        return (self.event_specification, self.variable_access)
 
 
 class CreateClassEventNode(Node):
@@ -208,16 +223,16 @@ class CreateCreatorEventNode(Node):
 class CreateInstanceEventNode(Node):
     variable_name = None
     event_specification = None
-    to_variable_name = None
+    to_variable_access = None
     
-    def __init__(self, variable_name, event_specification, to_variable_name):
+    def __init__(self, variable_name, event_specification, to_variable_access):
         self.variable_name = variable_name
         self.event_specification = event_specification
-        self.to_variable_name = to_variable_name
+        self.to_variable_access = to_variable_access
         
     @property
     def children(self):
-        return (self.event_specification,)
+        return (self.event_specification, self.to_variable_access)
 
 
 class GeneratePreexistingNode(Node):
@@ -393,7 +408,7 @@ class RelateNode(Node):
         self.from_variable_name = from_variable_name
         self.to_variable_name = to_variable_name
         self.rel_id = rel_id
-        self.phrase = phrase
+        self.phrase = phrase or ''
     
 
 class RelateUsingNode(Node):
@@ -408,7 +423,7 @@ class RelateUsingNode(Node):
         self.to_variable_name = to_variable_name
         self.using_variable_name = using_variable_name
         self.rel_id = rel_id
-        self.phrase = phrase
+        self.phrase = phrase or ''
 
 
 class UnrelateNode(Node):
@@ -421,7 +436,7 @@ class UnrelateNode(Node):
         self.from_variable_name = from_variable_name
         self.to_variable_name = to_variable_name
         self.rel_id = rel_id
-        self.phrase = phrase
+        self.phrase = phrase or ''
 
 
 class UnrelateUsingNode(Node):
@@ -436,7 +451,7 @@ class UnrelateUsingNode(Node):
         self.to_variable_name = to_variable_name
         self.using_variable_name = using_variable_name
         self.rel_id = rel_id
-        self.phrase = phrase
+        self.phrase = phrase or ''
     
 
 class SelectRelatedNode(Node):
@@ -499,7 +514,7 @@ class NavigationStepNode(Node):
     def __init__(self, key_letter, rel_id, phrase):
         self.key_letter = key_letter
         self.rel_id = rel_id
-        self.phrase = phrase
+        self.phrase = phrase or ''
     
 
 class SelectFromNode(Node):
@@ -667,19 +682,23 @@ class BinaryOperationNode(Node):
         return (self.left, self.right)
 
 
-class SelfAccessNode(Node):
-    pass
-
-
-class SelectedAccessNode(Node):
-    pass
-
-
 class VariableAccessNode(Node):
     variable_name = None
     
     def __init__(self, variable_name):
         self.variable_name = variable_name
+
+
+class SelfAccessNode(VariableAccessNode):
+
+    def __init__(self, variable_name='self'):
+        VariableAccessNode.__init__(self, variable_name)
+
+
+class SelectedAccessNode(VariableAccessNode):
+
+    def __init__(self, variable_name='selected'):
+        VariableAccessNode.__init__(self, variable_name)
 
 
 class ParamAccessNode(Node):
@@ -743,7 +762,7 @@ class BooleanNode(Node):
         self.value = value
 
 
-class EnumNode(Node):
+class EnumOrNamedConstantNode(Node):
     namespace = None
     name = None
     
@@ -764,6 +783,7 @@ def set_positional_info(node, p):
     set positional information on a node
     '''
     node.position = Position()
+    node.position.label = p.lexer.label
     node.position.start_stream = p.lexpos(1)
     node.position.start_line = p.lineno(1)
     node.position.start_column = find_column(p.lexer.lexdata,
@@ -882,8 +902,11 @@ class OALParser(object):
                          'GE',
                          'PLUS',
                          'MINUS',
+                         'PIPE',
                          'DIV',
                          'MOD',
+                         'AMP',
+                         'CARET',
                          'COMMENT',
                          'SL_STRING'
         )
@@ -895,8 +918,8 @@ class OALParser(object):
         ('left', 'OR'),
         ('left', 'AND'),
         ('nonassoc', 'LESSTHAN', 'LE', 'DOUBLEEQUAL', 'GT', 'GE', 'NOTEQUAL'),
-        ('left', 'PLUS', "MINUS"),
-        ('left', "TIMES", "DIV"),
+        ('left', 'PLUS', 'MINUS', 'PIPE'),
+        ('left', 'TIMES', 'DIV', 'AMP', 'CARET'),
         ('left', 'MOD'),
         ('right', 'UNARY'),
     )
@@ -909,7 +932,7 @@ class OALParser(object):
                                 outputdir=os.path.dirname(__file__),
                                 tabmodule='bridgepoint.__oal_parsetab')
 
-    def text_input(self, text):
+    def text_input(self, text, label='<string>'):
         lexer = lex.lex(debuglog=logger,
                         errorlog=logger,
                         optimize=1,
@@ -917,6 +940,7 @@ class OALParser(object):
                         outputdir=os.path.dirname(__file__),
                         lextab="bridgepoint.__oal_lextab")
 
+        lexer.label = label
         return self.parser.parse(lexer=lexer,
                                  input=text,
                                  tracking=1)
@@ -1085,6 +1109,11 @@ class OALParser(object):
         r"\-"
         t.endlexpos = t.lexpos + len(t.value)
         return t
+
+    def t_PIPE(self, t):
+        r"\|"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
     
     def t_DIV(self, t):
         r"/"
@@ -1095,7 +1124,17 @@ class OALParser(object):
         r"%"
         t.endlexpos = t.lexpos + len(t.value)
         return t
+ 
+    def t_AMP(self, t):
+        r"&"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
     
+    def t_CARET(self, t):
+        r"\^"
+        t.endlexpos = t.lexpos + len(t.value)
+        return t
+ 
     def t_newline(self, t):
         r'\n+'
         t.lexer.lineno += len(t.value)
@@ -1264,9 +1303,15 @@ class OALParser(object):
     
     @track_production
     def p_generate_instance_event_statement_1(self, p):
-        '''statement : GENERATE event_specification TO identifier'''
+        '''statement : GENERATE event_specification TO variable_access'''
         p[0] = GenerateInstanceEventNode(event_specification=p[2],
-                                         variable_name=p[4])
+                                         variable_access=p[4])
+        
+    @track_production
+    def p_generate_instance_event_statement_2(self, p):
+        '''statement : GENERATE event_specification TO self_access'''
+        p[0] = GenerateInstanceEventNode(event_specification=p[2],
+                                         variable_access=p[4])
         
     @track_production
     def p_create_class_event_statement(self, p):
@@ -1291,17 +1336,17 @@ class OALParser(object):
     
     @track_production
     def p_create_instance_event_statement_1(self, p):
-        '''statement : CREATE EVENT INSTANCE variable_name OF event_specification TO variable_name'''
+        '''statement : CREATE EVENT INSTANCE variable_name OF event_specification TO variable_access'''
         p[0] = CreateInstanceEventNode(variable_name=p[4],
                                        event_specification=p[6],
-                                       to_variable_name=p[8])
+                                       to_variable_access=p[8])
     
     @track_production
     def p_create_instance_event_statement_2(self, p):
-        '''statement : CREATE EVENT INSTANCE variable_name OF event_specification TO SELF'''
+        '''statement : CREATE EVENT INSTANCE variable_name OF event_specification TO self_access'''
         p[0] = CreateInstanceEventNode(variable_name=p[4],
                                        event_specification=p[6],
-                                       to_variable_name=p[8])
+                                       to_variable_access=p[8])
         
     @track_production
     def p_generate_preexisting_event_statement(self, p):
@@ -1703,9 +1748,12 @@ class OALParser(object):
         '''
         expression : expression PLUS  expression
                    | expression MINUS expression
+                   | expression PIPE  expression
                    | expression TIMES expression
                    | expression DIV   expression
                    | expression MOD   expression
+                   | expression AMP   expression
+                   | expression CARET expression
         '''
         p[0] = BinaryOperationNode(left=p[1],
                                    operator=p[2],
@@ -1946,10 +1994,10 @@ class OALParser(object):
         p[0] = BooleanNode(value=p[1])
     
     @track_production
-    def p_constant_enum(self, p):
+    def p_enum_or_named_constant(self, p):
         '''constant : namespace DOUBLECOLON identifier'''
-        p[0] = EnumNode(namespace=p[1],
-                        name=p[3])
+        p[0] = EnumOrNamedConstantNode(namespace=p[1],
+                                       name=p[3])
 
     @track_production
     def p_unary_operator(self, p):
@@ -1972,13 +2020,13 @@ class OALParser(object):
             raise ParseException("unknown parsing error")
 
 
-def parse(action_code):
+def parse(action_code, label='<string>'):
     '''
     Parse and construct an abstract syntax tree for text expressed in the
     Object Action Language (OAL).
     '''
     parser = OALParser()
-    return parser.text_input(action_code + '\n')
+    return parser.text_input(action_code + '\n', label)
 
 
 if __name__ == '__main__':

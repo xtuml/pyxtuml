@@ -1,6 +1,23 @@
+# encoding: utf-8
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import unittest
-import xtuml
 import bridgepoint
 
 import xtuml.consistency_check
@@ -55,23 +72,22 @@ class TestConcistency(unittest.TestCase):
         
     def test_unique_identifier_with_null(self):
         m = self.metamodel
-        act_blk = m.new('ACT_BLK')
-        act_blk.Block_ID = None
-        self.assertEqual(1, xtuml.check_uniqueness_constraint(m, 'ACT_BLK'))
+        pe_pe = m.new('PE_PE')
+        pe_pe.Element_ID = None
+        self.assertEqual(1, xtuml.check_uniqueness_constraint(m, 'PE_PE'))
         
     def test_uniqueness_constraint(self):
         m = self.metamodel
         self.assertTrue(m.is_consistent())
         
         s_dt = m.select_one('S_DT', xtuml.where_eq(Name='string'))
-        m.clone(s_dt)
+        pe_pe = xtuml.navigate_one(s_dt).PE_PE[8001]()
+        pe_pe_clone = m.clone(pe_pe)
         
-        # S_DT has two unique identifiers (I1 and I2). two instances
-        # produce one error each, hence 4 errors
         self.assertFalse(m.is_consistent())
-        self.assertEqual(4, xtuml.check_uniqueness_constraint(m, 'S_DT'))
+        self.assertEqual(1, xtuml.check_uniqueness_constraint(m, 'PE_PE'))
         
-        xtuml.delete(s_dt)
+        xtuml.delete(pe_pe_clone)
         self.assertTrue(m.is_consistent())
 
     def test_subtype_integrity(self):

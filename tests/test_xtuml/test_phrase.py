@@ -1,3 +1,21 @@
+# encoding: utf-8
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
+
 import unittest
 import xtuml
 
@@ -103,6 +121,12 @@ class TestAssocClass(unittest.TestCase):
 
         self.assertTrue(relate(assoc, cls1, 1, 'one'))
         self.assertTrue(relate(assoc, cls2, 1, 'other'))
+        
+        self.assertTrue(one(cls1).Class[1, 'other']())
+        self.assertFalse(one(cls2).Class[1, 'other']())
+        
+        self.assertFalse(one(cls1).Class[1, 'one']())
+        self.assertTrue(one(cls2).Class[1, 'one']())
 
     def test_relate_assoc_to_two_classes_incorrectly(self):
         cls1 = self.m.new('Class')

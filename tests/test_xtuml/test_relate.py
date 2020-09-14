@@ -1,5 +1,20 @@
 # encoding: utf-8
-# Copyright (C) 2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
 import xtuml
@@ -19,10 +34,28 @@ class TestRelateUnrelate(unittest.TestCase):
         s_edt = self.m.new('S_EDT')
         s_dt = self.m.new('S_DT')
         pe_pe = self.m.new('PE_PE')
+        self.assertFalse(xtuml.navigate_one(s_dt).S_EDT[17]())
         self.assertTrue(xtuml.relate(s_dt, pe_pe, 8001))
         self.assertTrue(xtuml.relate(s_dt, s_edt, 17))
         self.assertEqual(s_edt, xtuml.navigate_one(s_dt).S_EDT[17]())
-
+        
+    def test_select_where_after_relate(self):
+        s_edt = self.m.new('S_EDT')
+        s_dt = self.m.new('S_DT')
+        pe_pe = self.m.new('PE_PE')
+        
+        self.assertFalse(self.m.select_any('S_DT', xtuml.where_eq(DT_ID=pe_pe.Element_ID)))
+        
+        self.assertTrue(xtuml.relate(s_dt, pe_pe, 8001))
+        self.assertTrue(xtuml.relate(s_dt, s_edt, 17))
+        
+        self.assertTrue(self.m.select_any('S_DT', xtuml.where_eq(DT_ID=pe_pe.Element_ID)))
+        
+        self.assertTrue(xtuml.unrelate(s_dt, pe_pe, 8001))
+        self.assertTrue(xtuml.unrelate(s_dt, s_edt, 17))
+        
+        self.assertFalse(self.m.select_any('S_DT', xtuml.where_eq(DT_ID=pe_pe.Element_ID)))
+        
     def test_relate_when_already_related(self):
         act_smt = self.m.new('ACT_SMT')
         act_blk1 = self.m.new('ACT_BLK')
@@ -38,7 +71,7 @@ class TestRelateUnrelate(unittest.TestCase):
 
         self.assertTrue(xtuml.relate(inst1, act_blk, 602))
         self.assertTrue(xtuml.relate(inst2, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'precedes'))
+        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'succeeds'))
         self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
         self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
         
@@ -49,7 +82,7 @@ class TestRelateUnrelate(unittest.TestCase):
 
         self.assertTrue(xtuml.relate(inst1, act_blk, 602))
         self.assertTrue(xtuml.relate(inst2, act_blk, 602))
-        self.assertTrue(xtuml.relate(inst2, inst1, 661, 'succeeds'))
+        self.assertTrue(xtuml.relate(inst2, inst1, 661, 'precedes'))
         self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
         self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
         
@@ -81,11 +114,11 @@ class TestRelateUnrelate(unittest.TestCase):
         self.assertTrue(xtuml.relate(inst1, act_blk, 602))
         self.assertTrue(xtuml.relate(inst2, act_blk, 602))
         
-        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'precedes'))
+        self.assertTrue(xtuml.relate(inst1, inst2, 661, 'succeeds'))
         self.assertEqual(inst2, xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
         self.assertEqual(inst1, xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
         
-        self.assertTrue(xtuml.unrelate(inst1, inst2, 661, 'precedes'))
+        self.assertTrue(xtuml.unrelate(inst1, inst2, 661, 'succeeds'))
         self.assertIsNone(xtuml.navigate_one(inst2).ACT_SMT[661, 'precedes']())
         self.assertIsNone(xtuml.navigate_one(inst1).ACT_SMT[661, 'succeeds']())
 
@@ -93,7 +126,7 @@ class TestRelateUnrelate(unittest.TestCase):
         inst1 = self.m.new('PE_PE')
         inst2 = self.m.new('EP_PKG')
         self.assertTrue(xtuml.relate(inst1, inst2, 8001))
-        self.assertFalse(xtuml.unrelate(inst1, inst2, 8001))
+        self.assertTrue(xtuml.unrelate(inst1, inst2, 8001))
 
     def test_unrelate_none(self):
         inst = self.m.new('ACT_SMT')

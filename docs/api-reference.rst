@@ -16,7 +16,7 @@ Loading Metamodels
 Metamodel Operations
 ^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: xtuml.MetaModel
-   :members: clone, new, find_class, select_one, select_many
+   :members: clone, new, find_class, find_metaclass, select_one, select_many
 
 .. autofunction:: xtuml.navigate_one
 .. autofunction:: xtuml.navigate_any
@@ -25,13 +25,18 @@ Metamodel Operations
 .. autofunction:: xtuml.relate
 .. autofunction:: xtuml.unrelate
 .. autofunction:: xtuml.delete
+.. autofunction:: xtuml.cardinality
 .. autofunction:: xtuml.where_eq
+.. autofunction:: xtuml.order_by
+.. autofunction:: xtuml.reverse_order_by
 .. autofunction:: xtuml.sort_reflexive
+.. autofunction:: xtuml.get_metamodel
+.. autofunction:: xtuml.get_metaclass
 
 .. autoclass:: xtuml.MetaClass
    :members: clone, new, select_one, select_many, query, navigate, delete,
 	     attribute_names, append_attribute, insert_attribute, delete_attribute,
-	     referential_attributes, identifying_attributes
+	     referential_attributes, identifying_attributes, attribute_type
 
 .. autofunction:: xtuml.check_association_integrity
 .. autofunction:: xtuml.check_uniqueness_constraint
@@ -47,7 +52,12 @@ Persistance
 .. autofunction:: xtuml.serialize_schema
 .. autofunction:: xtuml.serialize_instances
 .. autofunction:: xtuml.serialize_instance
-
+.. autofunction:: xtuml.serialize_classes
+.. autofunction:: xtuml.serialize_class
+.. autofunction:: xtuml.serialize_associations
+.. autofunction:: xtuml.serialize_association
+.. autofunction:: xtuml.serialize_unique_identifiers
+		  
 Tools
 ^^^^^
 .. autoclass:: xtuml.UUIDGenerator

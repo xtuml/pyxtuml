@@ -23,8 +23,8 @@ Option           Description
 ===============  ===================================================
 --version        show program's version number and exit
 --help, -h       show this help message and exit
--r <number>      limit consistency check to one or more associations
--k <key letter>  limit check for uniqueness constraint violations to
+-r NUMBER        limit consistency check to one or more associations
+-k KEY_LETTER    limit check for uniqueness constraint violations to
                  one or more classes
 --verbosity, -v  increase debug logging level
 ===============  ===================================================
@@ -47,13 +47,37 @@ Option           Description
 ===============  ===================================================
 --version        show program's version number and exit
 --help, -h       show this help message and exit
--r <number>      limit consistency check to one or more associations
--k <key letter>  limit check for uniqueness constraint violations to
+-r NUMBER        limit consistency check to one or more associations
+-k KEY_LETTER    limit check for uniqueness constraint violations to
                  one or more classes
 --globals, -g    add builtin global data types automatically, e.g.
                  boolean, integer and real
 --verbosity, -v  increase debug logging level
 ===============  ===================================================
+
+Model Execution
+---------------
+pyxtuml is able to execute BridgePoint functions, derived attributes and class 
+operations (both class-based and instance-based). There is also support for the
+built-in external entities ARCH and LOG. Asynchronous execution is currently 
+not supported, i.e. events, signals and state machines.
+
+::
+
+   $ python -m bridgepoint.interpret [options] <model_path> [another_model_path...]
+
+
+**Available options**
+
+=========================  =========================================================
+Option                     Description
+=========================  =========================================================
+--version                  show program's version number and exit
+--help, -h                 show this help message and exit
+--function=NAME, -f NAME   invoke a function named NAME
+--component=NAME, -c NAME  look for the function to invoke in a component named NAME
+--verbosity, -v            increase debug logging level
+=========================  =========================================================
 
 SQL Schema Generator
 --------------------

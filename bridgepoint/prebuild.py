@@ -1,6 +1,21 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Copyright (C) 2015-2016 John Törnblom
+# Copyright (C) 2017 John Törnblom
+#
+# This file is part of pyxtuml.
+#
+# pyxtuml is free software: you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation, either
+# version 3 of the License, or (at your option) any later version.
+#
+# pyxtuml is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 '''
 Transform OAL actions from its textual form into instances in a the ooaofooa
 metamodel.
@@ -160,7 +175,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         self.pe_pe_cache = xtuml.QuerySet()
         
         scope_filt = lambda sel: (ooaofooa.is_contained_in(sel, self.c_c) or
-                                 ooaofooa.is_global(sel)) 
+                                  ooaofooa.is_global(sel))
         
         self.pe_pe_cache |= self.m.select_many('PE_PE', scope_filt)
         
@@ -225,7 +240,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_var
     
     def v_int(self, node, name, o_obj):
-        s_dt = self.s_dt('inst_ref<Object>')
+        s_irdt = one(o_obj).S_IRDT[123](lambda sel: not sel.isSet)
+        s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref<Object>')
         v_var = self.v_var(node, Name=name)
         v_int = self.new('V_INT')  # TODO: V_INT.IsImplicitInFor
         
@@ -239,7 +255,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_int
         
     def v_ins(self, node, name, o_obj):
-        s_dt = self.s_dt('inst_ref_set<Object>')
+        s_irdt = one(o_obj).S_IRDT[123](lambda sel: sel.isSet)
+        s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref_set<Object>')
         v_var = self.v_var(node, Name=name)
         v_ins = self.new('V_INS')
         
@@ -265,8 +282,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_trn
     
     def v_isr(self, node, name):
-        s_dt = self.s_dt('inst_ref_set<Object>')
         v_var = self.find_symbol(node, name)
+        s_dt = one(v_var).S_DT[848]()
         v_val = self.v_val(node)
         v_isr = self.new('V_ISR')
         
@@ -277,8 +294,8 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_isr
     
     def v_irf(self, node, name):
-        s_dt = self.s_dt('inst_ref<Object>')
         v_var = self.find_symbol(node, name)
+        s_dt = one(v_var).S_DT[848]()
         v_val = self.v_val(node)
         v_irf = self.new('V_IRF')
         
@@ -289,8 +306,9 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_irf
 
     def v_avl(self, node, o_attr, root_v_val):
-        s_dt = one(o_attr).S_DT[114]()
-            
+        s_dt = (one(o_attr).O_RATTR[106].O_BATTR[113].O_ATTR[106].S_DT[114]() or
+                one(o_attr).S_DT[114]())
+        
         v_val = self.v_val(node)
         v_avl = self.new('V_AVL')
             
@@ -368,7 +386,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         
         while act_lnk:
             act_lnk_end = act_lnk
-            act_lnk = one(act_lnk).ACT_LNK[604, 'succeeds']()
+            act_lnk = one(act_lnk).ACT_LNK[604, 'precedes']()
             
         v_val = self.accept(node.handle)
         
@@ -990,14 +1008,25 @@ class ActionPrebuilder(xtuml.tools.Walker):
         v_val_l = self.accept(node.left)
         v_val_r = self.accept(node.right)
 
-        if node.operator.lower() in ['<', '<=', '==', '!=', '>=', '>',
-                                     'and', 'or']:
+        s_dt_l = one(v_val_l).S_DT[820]()
+        operator = node.operator.lower()
+
+        # relational binops yield boolean values
+        if operator in ['<', '<=', '==', '!=', '>=', '>', 'and', 'or']:
             s_dt = self.s_dt('boolean')
+
+        # set-theoretic binops yield inst_ref_set values
+        elif (operator in ['|', '+', '&', '^', '-'] and
+              s_dt_l in [self.s_dt('inst_ref<Object>'), self.s_dt('inst_ref_set<Object>')]):
+            s_irdt = one(s_dt_l).S_IRDT[17].O_OBJ[123].S_IRDT[123](lambda sel: sel.isSet)
+            s_dt = one(s_irdt).S_DT[17]() or self.s_dt('inst_ref_set<Object>')
+
+        # default: cast to left type
         else:
-            s_dt = one(v_val_l).S_DT[820]()
+            s_dt = s_dt_l
         
         v_val = self.v_val(node)
-        v_bin = self.new('V_BIN', Operator=node.operator.lower())
+        v_bin = self.new('V_BIN', Operator=operator)
         
         relate(v_val, s_dt, 820)
         relate(v_bin, v_val, 801)
@@ -1068,18 +1097,34 @@ class ActionPrebuilder(xtuml.tools.Walker):
         
         return v_val
     
-    def accept_EnumNode(self, node):
+    def accept_EnumOrNamedConstantNode(self, node):
         s_dt = self.s_dt(node.namespace)
         while one(s_dt).S_UDT[17]():
             s_dt = one(s_dt).S_UDT[17].S_DT[18]()
-            
+
         s_enum = one(s_dt).S_EDT[17].S_ENUM[27](where(name=node.name))
-        v_val = self.v_val(node)
-        v_len = self.new('V_LEN')
+        cnst_csp = self.any('CNST_CSP', where(InformalGroupName=node.namespace))
+        cnst_syc = one(cnst_csp).CNST_SYC[1504](where(Name=node.name))
+            
+        if s_enum:
+            v_val = self.v_val(node)
+            v_len = self.new('V_LEN')
         
-        relate(v_val, s_dt, 820)
-        relate(v_len, v_val, 801)
-        relate(v_len, s_enum, 824)
+            relate(v_val, s_dt, 820)
+            relate(v_len, v_val, 801)
+            relate(v_len, s_enum, 824)
+
+        elif cnst_syc:
+            s_dt = one(cnst_syc).S_DT[1500]()
+            v_val = self.v_val(node)
+            v_scv = self.new('V_SCV')
+            
+            relate(v_val, v_scv, 801)
+            relate(v_val, s_dt, 820)
+            relate(v_scv, cnst_syc, 850)
+
+        else:
+            raise Exception("Unknown identifier '%s::%s'" % (node.namespace, node.name))
         
         return v_val
     
@@ -1122,7 +1167,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return one(e_gsme).E_GES[703].E_ESS[701].ACT_SMT[603]()
     
     def accept_GenerateInstanceEventNode(self, node):
-        v_var = self.find_symbol(node, name=node.variable_name)
+        v_var = self.find_symbol(node, name=node.variable_access.variable_name)
         o_obj = one(v_var).V_INT[814].O_OBJ[818]()
         evt_filter = lambda sel: (sel.Drv_Lbl == node.event_specification.identifier or
                                   sel.Drv_Lbl == node.event_specification.identifier + '*')
@@ -1145,7 +1190,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
             v_var = one(v_trn).V_VAR[814]()
             relate(v_var, s_dt, 848)
         
-        v_var_to = self.find_symbol(node, name=node.to_variable_name)            
+        v_var_to = self.find_symbol(node, name=node.to_variable_access.variable_name)
         o_obj = one(v_var_to).V_INT[814].O_OBJ[818]()
         evt_filter = lambda sel: (sel.Drv_Lbl == node.event_specification.identifier or
                                   sel.Drv_Lbl == node.event_specification.identifier + '*')
@@ -1334,10 +1379,13 @@ class ActionPrebuilder(xtuml.tools.Walker):
         c_po = one(self.c_c).C_PO[4010](port_filt)        
         c_ir = one(c_po).C_IR[4016]()
         c_ep = one(c_ir).C_I[4012].C_EP[4003](where(Name=node.action_name))            
-        spr_ro = one(c_ep).SPR_REP[4500].SPR_RO[4502]()
-        spr_rs = one(c_ep).SPR_REP[4500].SPR_RS[4502]()
-        spr_po = one(c_ep).SPR_PEP[4501].SPR_PO[4503]()
-        spr_ps = one(c_ep).SPR_PEP[4501].SPR_PS[4503]()
+        spr_rep = one(c_ir).C_R[4009].SPR_REP[4500](where(ExecutableProperty_Id=c_ep.Id))
+        spr_ro = one(spr_rep).SPR_RO[4502]()
+        spr_rs = one(spr_rep).SPR_RS[4502]()
+        spr_pep = one(c_ir).C_P[4009].SPR_PEP[4501](where(ExecutableProperty_Id=c_ep.Id))
+        spr_po = one(spr_pep).SPR_PO[4503]()
+        spr_ps = one(spr_pep).SPR_PS[4503]()
+
         
         if act_smt:
             if spr_ro:
@@ -1345,34 +1393,32 @@ class ActionPrebuilder(xtuml.tools.Walker):
                          Statement_ID=act_smt.Statement_ID,
                          RequiredOp_Id=spr_ro.Id)
     
-            if spr_po:
+            elif spr_po:
                 self.new('ACT_IOP',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedOp_Id=spr_po.Id)
     
-            if spr_rs:
+            elif spr_rs:
                 self.new('ACT_SGN',
                          Statement_ID=act_smt.Statement_ID,
                          RequiredSig_Id=spr_rs.Id)
             
-            if spr_ps:
-                self.new('ACT_IOP',
+            elif spr_ps:
+                self.new('ACT_SGN',
                          Statement_ID=act_smt.Statement_ID,
                          ProvidedSig_Id=spr_ps.Id)
         
-        spr_rep = one(spr_ro).SPR_REP[4502]()
-        spr_pep = one(spr_po).SPR_PEP[4503]()
         c_io = one(c_ep).C_IO[4004]()
         v_val = None
         
-        if spr_rep:
+        if spr_ro:
             v_val = self.v_val(node, DT_ID=c_io.DT_ID)
             self.new('V_MSV',
                      Value_ID=v_val.Value_ID,
                      REP_Id=spr_rep.Id,
                      ParmListOK=True)
             
-        if spr_pep:
+        if spr_po:
             v_val = self.v_val(node, DT_ID=c_io.DT_ID)
             self.new('V_MSV',
                      Value_ID=v_val.Value_ID,
@@ -1384,26 +1430,31 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return v_val
 
     def accept_ParameterListNode(self, node, act_smt, v_val):
-        next_value_id = None
+        prev_v_par = None
         for child in reversed(node.children):
             v_par = self.accept(child)
-            v_par.Next_Value_ID = next_value_id
+            xtuml.relate(prev_v_par, v_par, 816, 'precedes')
+            xtuml.relate(v_par, one(v_val).V_BRV[801](), 810)
+            xtuml.relate(v_par, one(v_val).V_TRV[801](), 811)
+            xtuml.relate(v_par, one(v_val).V_FNV[801](), 817)
+            xtuml.relate(v_par, one(v_val).V_MSV[801](), 842)
+
+            xtuml.relate(v_par, one(act_smt).ACT_TFM[603](), 627)
+            xtuml.relate(v_par, one(act_smt).ACT_BRG[603](), 628)
+            xtuml.relate(v_par, one(act_smt).ACT_FNC[603](), 669)
+            xtuml.relate(v_par, one(act_smt).ACT_IOP[603](), 679)
+            xtuml.relate(v_par, one(act_smt).ACT_SGN[603](), 662)
+            xtuml.relate(v_par, one(act_smt).E_ESS[603](), 700)
             
-            if act_smt:
-                v_par.Statement_ID = act_smt.Statement_ID
-            
-            if v_val:
-                v_par.Invocation_Value_ID = v_val.Value_ID
-                
-            next_value_id = v_par.Value_ID
+            prev_v_par = v_par
     
     def accept_ParameterNode(self, node):
         v_val = self.accept(node.expression)
-        return self.new('V_PAR',
-                        Value_ID=v_val.Value_ID,
-                        Invocation_Value_ID=v_val.Value_ID,
-                        Name=node.name)
+        v_par = self.new('V_PAR', Name=node.name)
+        relate(v_val, v_par, 800)
         
+        return v_par
+    
     def accept_GeneratePortEventNode(self, node):
         port_filt = lambda sel: (sel.Name == node.port_name or 
                                  one(sel).C_IR[4016].C_I[4012](where(Name=node.port_name)))
@@ -1411,9 +1462,11 @@ class ActionPrebuilder(xtuml.tools.Walker):
 
         c_ir = one(c_po).C_IR[4016]()
         c_ep = one(c_ir).C_I[4012].C_EP[4003](where(Name=node.action_name))            
-        spr_rs = one(c_ep).SPR_REP[4500].SPR_RS[4502]()
-        spr_ps = one(c_ep).SPR_PEP[4501].SPR_PS[4503]()
-        
+        spr_rep = one(c_ir).C_R[4009].SPR_REP[4500](where(ExecutableProperty_Id=c_ep.Id))
+        spr_rs = one(spr_rep).SPR_RS[4502]()
+        spr_pep = one(c_ir).C_P[4009].SPR_PEP[4501](where(ExecutableProperty_Id=c_ep.Id))
+        spr_ps = one(spr_pep).SPR_PS[4503]()
+
 
         act_smt = self.act_smt(node)
         v_val = self.accept(node.expression)
@@ -1562,12 +1615,21 @@ class TransitionPrebuilder(ActionPrebuilder):
         return ''
         
     def accept_BodyNode(self, node):
-        act_sab = self.new('ACT_SAB')
-        relate(act_sab, self._sm_act, 691)
-        
-        self.act_act = self.new('ACT_ACT')
-        
-        relate(act_sab, self.act_act, 698)
+        sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
+        if sm_moah is not None:
+            act_sab = self.new('ACT_SAB')
+            relate(act_sab, self._sm_act, 691)
+            
+            self.act_act = self.new('ACT_ACT')
+            
+            relate(act_sab, self.act_act, 698)
+        else:
+            act_tab = self.new('ACT_TAB')
+            relate(act_tab, self._sm_act, 688)
+            
+            self.act_act = self.new('ACT_ACT')
+            
+            relate(act_tab, self.act_act, 698)
         
         return ActionPrebuilder.accept_BodyNode(self, node)
 
@@ -1800,7 +1862,7 @@ def prebuild_action(instance):
         'SPR_PO': ProvidedOperationPrebuilder,
         'SPR_PS': ProvidedSignalPrebuilder
     }
-    metaclass = instance.__metaclass__
+    metaclass = xtuml.get_metaclass(instance)
     walker = walker_map[metaclass.kind](metaclass.metamodel, instance)
     logger.info('processing action %s' % walker.label)
     # walker.visitors.append(xtuml.tools.NodePrintVisitor())
