@@ -2013,9 +2013,7 @@ class OALParser(object):
     
     def p_error(self, p):
         if p:
-            raise ParseException("invalid token '%s' at %s : %s" % (p.type,
-                                                                  'Line number: ' + str(p.lineno),
-                                                                  'Column: ' + str(find_column(p.lexer.lexdata, p.lexpos))))
+            raise ParseException("invalid token '%s' at line: %s, column: %s" % (p.type,p.lineno, find_column(p.lexer.lexdata, p.lexpos)))
         else:
             raise ParseException("unknown parsing error")
 

@@ -1489,10 +1489,10 @@ class BridgePrebuilder(ActionPrebuilder):
     @property
     def label(self):
         s_ee = one(self._s_brg).S_EE[19]()
-        compName = ""
+        comp_name = ""
         if self.c_c is not None:
-            compName = self.c_c.Name + "::"
-        return '%s%s::%s' % (compName, s_ee.Name, self._s_brg.Name)
+            comp_name = self.c_c.Name + "::"
+        return '%s%s::%s' % (comp_name, s_ee.Name, self._s_brg.Name)
 
     def accept_BodyNode(self, node):
         act_brb = self.new('ACT_BRB')
@@ -1600,9 +1600,9 @@ class TransitionPrebuilder(ActionPrebuilder):
     
     def __init__(self, metamodel, sm_act):
         self._sm_act = sm_act
-        self._assigned = one(
+        self._sm_evt = one(
             sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].SM_NSTXN[507].SM_SEME[504].SM_SEVT[503].SM_EVT[525]()
-        self._state = one(sm_act).SM_AH[514].SM_MOAH[513].SM_STATE[511]()
+        self._sm_state = one(sm_act).SM_AH[514].SM_MOAH[513].SM_STATE[511]()
         self._o_obj = (one(sm_act).SM_SM[515].SM_ISM[517].O_OBJ[518]() or
                        one(sm_act).SM_SM[515].SM_ASM[517].O_OBJ[519]())
         c_c = get_defining_component(self._o_obj)
@@ -1636,12 +1636,12 @@ class TransitionPrebuilder(ActionPrebuilder):
 
     @ property
     def label(self):
-        actionOwnerName = ""
+        action_owner_name = ""
         if self._assigned is not None:
-            actionOwnerName = self.get_event_name(self._assigned)
+            action_owner_name = self.get_event_name(self._sm_evt)
         else:
-            actionOwnerName = self._state.Name
-        return '%s::%s::%s' % (self.c_c.Name, self._o_obj.Name, actionOwnerName)
+            action_owner_name = self._sm_state.Name
+        return '%s::%s::%s' % (self.c_c.Name, self._o_obj.Name, action_owner_name)
 
     def accept_BodyNode(self, node):
         sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
