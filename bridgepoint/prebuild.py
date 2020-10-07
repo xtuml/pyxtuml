@@ -1480,6 +1480,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return act_smt
     
 class BridgePrebuilder(ActionPrebuilder):
+    element_type = "Bridge"
     def __init__(self, metamodel, s_brg):
         self._s_brg = s_brg
         s_ee = one(s_brg).S_EE[19]()
@@ -1517,6 +1518,7 @@ class BridgePrebuilder(ActionPrebuilder):
 
 
 class FunctionPrebuilder(ActionPrebuilder):
+    element_type = "Function"
     def __init__(self, metamodel, s_sync):
         self._s_sync = s_sync
         c_c = get_defining_component(s_sync)
@@ -1552,7 +1554,7 @@ class FunctionPrebuilder(ActionPrebuilder):
 
 
 class OperationPrebuilder(ActionPrebuilder):
-    
+    element_type = "Operation"
     def __init__(self, metamodel, o_tfr):
         self._o_tfr = o_tfr
         self._o_obj = one(o_tfr).O_OBJ[115]()
@@ -1597,7 +1599,8 @@ class OperationPrebuilder(ActionPrebuilder):
 
 
 class TransitionPrebuilder(ActionPrebuilder):
-    
+    element_type = ""
+    action_owner_name = ""
     def __init__(self, metamodel, sm_act):
         self._sm_act = sm_act
         self._sm_evt = one(
@@ -1606,6 +1609,14 @@ class TransitionPrebuilder(ActionPrebuilder):
         self._o_obj = (one(sm_act).SM_SM[515].SM_ISM[517].O_OBJ[518]() or
                        one(sm_act).SM_SM[515].SM_ASM[517].O_OBJ[519]())
         c_c = get_defining_component(self._o_obj)
+        self.action_owner_name = ""
+        if self._sm_evt is not None:
+            self.element_type = "Transition"
+            self.action_owner_name = self.get_event_name(self._sm_evt)
+        else:
+            self.element_type = "State"
+            self.action_owner_name = self._sm_state.Name
+        
         ActionPrebuilder.__init__(self, metamodel, c_c)
 
     def find_symbol(self, node, name):
@@ -1636,12 +1647,7 @@ class TransitionPrebuilder(ActionPrebuilder):
 
     @ property
     def label(self):
-        action_owner_name = ""
-        if self._sm_state is not None:
-            action_owner_name = self.get_event_name(self._sm_evt)
-        else:
-            action_owner_name = self._sm_state.Name
-        return '%s::%s::%s' % (self.c_c.Name, self._o_obj.Name, action_owner_name)
+        return '%s::%s::%s' % (self.c_c.Name, self._o_obj.Name, self.action_owner_name)
 
     def accept_BodyNode(self, node):
         sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
@@ -1693,7 +1699,7 @@ class TransitionPrebuilder(ActionPrebuilder):
 
     
 class DerivedAttributePrebuilder(ActionPrebuilder):
-    
+    element_type = "Derived Base Attribute"
     def __init__(self, metamodel, o_dbattr):
         self._o_dbattr = o_dbattr
         self._o_obj = one(o_dbattr).O_BATTR[107].O_ATTR[106].O_OBJ[102]()
@@ -1727,7 +1733,7 @@ class DerivedAttributePrebuilder(ActionPrebuilder):
     
     
 class RequiredOperationPrebuilder(ActionPrebuilder):
-    
+    element_type = "Required Operaton"
     def __init__(self, metamodel, spr_ro):
         self._spr_ro = spr_ro
         c_c = one(
@@ -1765,7 +1771,7 @@ class RequiredOperationPrebuilder(ActionPrebuilder):
 
 
 class RequiredSignalPrebuilder(ActionPrebuilder):
-    
+    element_type = "Required Signal"
     def __init__(self, metamodel, spr_rs):
         self._spr_rs = spr_rs
         c_c = one(spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016].C_C[4010]()
@@ -1802,7 +1808,7 @@ class RequiredSignalPrebuilder(ActionPrebuilder):
 
 
 class ProvidedOperationPrebuilder(ActionPrebuilder):
-
+    element_type = "Provided Operation"
     def __init__(self, metamodel, spr_po):
         self._spr_po = spr_po
         c_c = one(spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016].C_C[4010]()
@@ -1839,7 +1845,7 @@ class ProvidedOperationPrebuilder(ActionPrebuilder):
 
 
 class ProvidedSignalPrebuilder(ActionPrebuilder):
-
+    element_type = "Provided Signal"
     def __init__(self, metamodel, spr_ps):
         self._spr_ps = spr_ps
         c_c = one(spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016].C_C[4010]()
@@ -1892,22 +1898,21 @@ def prebuild_action(instance):
     - SPR_PS
     '''
     walker_map = {
-        'S_SYNC': {'prebuilder': FunctionPrebuilder, 'elementName': 'Function'},
-        'S_BRG': {'prebuilder': BridgePrebuilder, 'elementName': 'Bridge'},
-        'O_TFR': {'prebuilder': OperationPrebuilder, 'elementName': 'Class Operation'},
-        'O_DBATTR': {'prebuilder': DerivedAttributePrebuilder, 'elementName': 'Derived Base Attribute'},
-        'SM_ACT': {'prebuilder': TransitionPrebuilder, 'elementName': 'State/Transaction'},
-        'SPR_RO': {'prebuilder': RequiredOperationPrebuilder, 'elementName': 'Required Operation'},
-        'SPR_RS': {'prebuilder': RequiredSignalPrebuilder, 'elementName': 'Required Signal'},
-        'SPR_PO': {'prebuilder': ProvidedOperationPrebuilder, 'elementName': 'Provided Operation'},
-        'SPR_PS': {'prebuilder': ProvidedSignalPrebuilder, 'elementName': 'Provided Signal'}
+        'S_SYNC': FunctionPrebuilder,
+        'S_BRG': BridgePrebuilder,
+        'O_TFR': OperationPrebuilder,
+        'O_DBATTR': DerivedAttributePrebuilder,
+        'SM_ACT': TransitionPrebuilder,
+        'SPR_RO': RequiredOperationPrebuilder,
+        'SPR_RS': RequiredSignalPrebuilder,
+        'SPR_PO': ProvidedOperationPrebuilder,
+        'SPR_PS': ProvidedSignalPrebuilder
     }
     metaclass = xtuml.get_metaclass(instance)
-    walker = walker_map[metaclass.kind]['prebuilder'](
+    walker = walker_map[metaclass.kind](
         metaclass.metamodel, instance)
-    action_type = walker_map[metaclass.kind]['elementName']
     logger.info('processing %s at %s' %
-                (action_type, walker.label))
+                (walker.element_type, walker.label))
     # walker.visitors.append(xtuml.tools.NodePrintVisitor())
     root = oal.parse(instance.Action_Semantics_internal)
     return walker.accept(root)
