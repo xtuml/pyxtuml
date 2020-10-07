@@ -1628,22 +1628,21 @@ class TransitionPrebuilder(ActionPrebuilder):
         return v_var
 
     def get_event_name(self, event):
-        nlevt = one(event).SM_SEVT[525].SM_NLEVT[526]()
-        if nlevt is not None:
-            poly = one(nlevt).SM_PEVT[527]()
-            if poly is not None:
-                if poly.SM_ID == nlevt.SM_ID:  # if this is a local poly
-                    return event.Drv_Lbl + ": " + event.Mning
-                else:
-                    return event.Mning + "::" + poly.localClassName
-            else:
-                return event.Mning + "::Orphaned"
-        else:
-            signalEvt = one(event).SM_SEVT[525].SM_SGEVT[526]()
-            if signalEvt is not None:
-                return event.Drv_Lbl
-            else:
-                return event.Drv_Lbl + ": " + event.Mning
+        sm_nlevt = one(event).SM_SEVT[525].SM_NLEVT[526]()
+        sm_sgevt = one(event).SM_SEVT[525].SM_SGEVT[526]()
+        sm_pevt = one(sm_nlevt).SM_PEVT[527]()
+        # If polymorphic and the polymorphic event is not local
+        # use the poly local class name
+        if sm_pevt is not None and sm_pevt.SM_ID != sm_nlevt.SM_ID:
+            return event.Mning + "::" + sm_pevt.localClassName
+        # If an orphaned polymorphic, append that to the name
+        if sm_nlevt is not None and sm_pevt is None:
+            return event.Mning + "::Orphaned"
+        #  If a signal event we use only the derived label
+        if sm_sgevt is not None:
+            return event.Drv_Lbl
+        # otherwise we combine the label with the event Mning
+        return event.Drv_Lbl + ": " + event.Mning
 
     @ property
     def label(self):
