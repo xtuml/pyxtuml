@@ -1637,7 +1637,7 @@ class TransitionPrebuilder(ActionPrebuilder):
     @ property
     def label(self):
         action_owner_name = ""
-        if self._assigned is not None:
+        if self._sm_state is not None:
             action_owner_name = self.get_event_name(self._sm_evt)
         else:
             action_owner_name = self._sm_state.Name
@@ -1736,11 +1736,11 @@ class RequiredOperationPrebuilder(ActionPrebuilder):
 
     @property
     def label(self):
-        interface = one(
+        c_i = one(
             self._spr_ro).SPR_REP[4502].C_R[4500].C_IR[4009].C_I[4012]()
-        port = one(
+        c_po = one(
             self._spr_ro).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016]()
-        return '%s::%s::%s::%s' % (self.c_c, port.Name, interface.Name, self._spr_ro.Name)
+        return '%s::%s::%s::%s' % (self.c_c, c_po.Name, c_i.Name, self._spr_ro.Name)
 
     def accept_BodyNode(self, node):
         act_rob = self.new('ACT_ROB')
@@ -1773,11 +1773,11 @@ class RequiredSignalPrebuilder(ActionPrebuilder):
 
     @property
     def label(self):
-        interface = one(
+        c_i = one(
             self._spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_I[4012]()
-        port = one(
+        c_po = one(
             self._spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016]()
-        return '%s::%s::%s::%s' % (self.c_c, port.Name, interface.Name, self._spr_rs.Name)
+        return '%s::%s::%s::%s' % (self.c_c, c_po.Name, c_i.Name, self._spr_rs.Name)
 
     def accept_BodyNode(self, node):
         act_rsb = self.new('ACT_RSB')
@@ -1810,11 +1810,11 @@ class ProvidedOperationPrebuilder(ActionPrebuilder):
         
     @property
     def label(self):
-        interface = one(
+        c_i = one(
             self._spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_I[4012]()
-        port = one(
+        c_po = one(
             self._spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016]()
-        return '%s::%s::%s::%s' % (self.c_c.Name, port.Name, interface.Name, self._spr_po.Name)
+        return '%s::%s::%s::%s' % (self.c_c.Name, c_po.Name, c_i.Name, self._spr_po.Name)
 
     def accept_BodyNode(self, node):
         act_pob = self.new('ACT_POB')
@@ -1847,11 +1847,11 @@ class ProvidedSignalPrebuilder(ActionPrebuilder):
 
     @property
     def label(self):
-        interface = one(
+        c_i = one(
             self._spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_I[4012]()
-        port = one(
+        c_po = one(
             self._spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016]()
-        return '%s::%s::%s::%s' % (self.c_c.Name, port.Name, interface.Name, self._spr_ps.Name)
+        return '%s::%s::%s::%s' % (self.c_c.Name, c_po.Name, c_i.Name, self._spr_ps.Name)
 
     def accept_BodyNode(self, node):
         act_psb = self.new('ACT_PSB')
@@ -1905,9 +1905,9 @@ def prebuild_action(instance):
     metaclass = xtuml.get_metaclass(instance)
     walker = walker_map[metaclass.kind]['prebuilder'](
         metaclass.metamodel, instance)
-    actionType = walker_map[metaclass.kind]['elementName']
+    action_type = walker_map[metaclass.kind]['elementName']
     logger.info('processing %s at %s' %
-                (actionType, walker.label))
+                (action_type, walker.label))
     # walker.visitors.append(xtuml.tools.NodePrintVisitor())
     root = oal.parse(instance.Action_Semantics_internal)
     return walker.accept(root)
