@@ -9,3 +9,7 @@ __xtuml_lextab.py
 __xtuml_parsetab.py
 __oal_lextab.py
 __oal_parsetab.py
+build
+dist
+pyxtuml.egg-info
+.history
