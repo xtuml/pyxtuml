@@ -1656,7 +1656,7 @@ class TransitionPrebuilder(ActionPrebuilder):
         sm_pevt = one(sm_nlevt).SM_PEVT[527]()
         # If polymorphic and the polymorphic event is not local
         # use the poly local class name
-        if sm_pevt is not None and sm_pevt.SM_ID != sm_nlevt.SM_ID:
+        if sm_pevt and sm_pevt.SM_ID != sm_nlevt.SM_ID:
             return event.Mning + "::" + sm_pevt.localClassName
         # If an orphaned polymorphic, append that to the name
         if sm_nlevt is not None and sm_pevt is None:
