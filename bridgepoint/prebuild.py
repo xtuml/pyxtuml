@@ -1616,7 +1616,6 @@ class OperationPrebuilder(ActionPrebuilder):
 
 class TransitionPrebuilder(ActionPrebuilder):
     element_type = None
-    action_owner_name = None
     label = None
     
     def __init__(self, metamodel, sm_act):
