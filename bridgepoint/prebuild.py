@@ -51,38 +51,35 @@ def get_defining_component(pe_pe):
         return None
     
     if pe_pe.__class__.__name__ != 'PE_PE':
-        pe_pe = xtuml.navigate_one(pe_pe).PE_PE[8001]()
+        pe_pe = one(pe_pe).PE_PE[8001]()
     
-    
-    ep_pkg = xtuml.navigate_one(pe_pe).EP_PKG[8000]()
+    ep_pkg = one(pe_pe).EP_PKG[8000]()
     if ep_pkg:
         return get_defining_component(ep_pkg)
     
-    return xtuml.navigate_one(pe_pe).C_C[8003]()
-    
-def get_path(pe_pe, path):
+    return one(pe_pe).C_C[8003]()
+
+
+def get_parent_label(pe_pe):
     '''
-    walk up the hierarchy while building the path
-    NOTE: this only accounts for the package/component
-    roots
+    Get a human readable label for the parent in which pe_pe is defined.
     '''
     if pe_pe is None:
-        return path
+        return ''
 
     if pe_pe.__class__.__name__ != 'PE_PE':
-        pe_pe = xtuml.navigate_one(pe_pe).PE_PE[8001]()
+        pe_pe = one(pe_pe).PE_PE[8001]()
     
-    ep_pkg = xtuml.navigate_one(pe_pe).EP_PKG[8000]()
-    if ep_pkg:
-        path = ep_pkg.Name + "::" + path
-        return get_path(ep_pkg, path)
+    inst = one(pe_pe).EP_PKG[8000]() or one(pe_pe).C_C[8003]()
+    if inst is None:
+        return ''
     
-    c_c = xtuml.navigate_one(pe_pe).C_C[8003]()
-    if c_c:
-        path = c_c.Name + "::" + path
-        return get_path(c_c, path)
-    # at top level
-    return path
+    label = get_parent_label(inst)
+    if label:
+        label += '::'
+
+    return label + inst.Name
+
 
 class Scope(object):
 
@@ -1503,17 +1500,16 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return act_smt
     
 class BridgePrebuilder(ActionPrebuilder):
-    element_type = "Bridge"
+    element_type = 'Bridge'
+    label = None
+    
     def __init__(self, metamodel, s_brg):
-        self._s_brg = s_brg
         s_ee = one(s_brg).S_EE[19]()
         c_c = get_defining_component(s_ee)
-        self._path = get_path(s_ee, s_ee.Name + '::' + s_brg.Name)
-        ActionPrebuilder.__init__(self, metamodel, c_c)      
+        self._s_brg = s_brg
+        self.label = '::'.join([get_parent_label(s_ee), s_ee.Name, s_brg.Name])
 
-    @property
-    def label(self):
-        return self._path
+        ActionPrebuilder.__init__(self, metamodel, c_c)
 
     def accept_BodyNode(self, node):
         act_brb = self.new('ACT_BRB')
@@ -1538,16 +1534,15 @@ class BridgePrebuilder(ActionPrebuilder):
 
 
 class FunctionPrebuilder(ActionPrebuilder):
-    element_type = "Function"
+    element_type = 'Function'
+    label = None
+    
     def __init__(self, metamodel, s_sync):
         self._s_sync = s_sync
         c_c = get_defining_component(s_sync)
-        self._path = get_path(s_sync, s_sync.Name)
+        self.label = get_parent_label(s_sync) + '::' + s_sync.Name
+        
         ActionPrebuilder.__init__(self, metamodel, c_c)      
-    
-    @property
-    def label(self):
-        return self._path
 
     def accept_BodyNode(self, node):
         act_fnb = self.new('ACT_FNB')
@@ -1575,12 +1570,15 @@ class FunctionPrebuilder(ActionPrebuilder):
 
 
 class OperationPrebuilder(ActionPrebuilder):
-    element_type = "Operation"
+    element_type = 'Operation'
+    label = None
+    
     def __init__(self, metamodel, o_tfr):
         self._o_tfr = o_tfr
         self._o_obj = one(o_tfr).O_OBJ[115]()
         c_c = get_defining_component(self._o_obj)
-        self._path = get_path(o_tfr, self._o_obj.Name + '::' + o_tfr.Name)
+        self.label = '::'.join([get_parent_label(self._o_obj), self._o_obj.Name,
+                                o_tfr.Name])
         ActionPrebuilder.__init__(self, metamodel, c_c)      
 
     def find_symbol(self, node, name):
@@ -1591,10 +1589,6 @@ class OperationPrebuilder(ActionPrebuilder):
         
         return v_var
     
-    @property
-    def label(self):
-        return self._path
-
     def accept_BodyNode(self, node):
         act_opb = self.new('ACT_OPB')
         relate(act_opb, self._o_tfr, 696)
@@ -1621,25 +1615,29 @@ class OperationPrebuilder(ActionPrebuilder):
 
 
 class TransitionPrebuilder(ActionPrebuilder):
-    element_type = ""
-    action_owner_name = ""
+    element_type = None
+    label = None
+    
     def __init__(self, metamodel, sm_act):
         self._sm_act = sm_act
-        self._sm_evt = one(
-            sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].SM_NSTXN[507].SM_SEME[504].SM_SEVT[503].SM_EVT[525]()
+        self._sm_evt = (one(sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
+                        SM_NSTXN[507].SM_SEME[504].SM_SEVT[503].SM_EVT[525]())
         self._sm_state = one(sm_act).SM_AH[514].SM_MOAH[513].SM_STATE[511]()
         self._o_obj = (one(sm_act).SM_SM[515].SM_ISM[517].O_OBJ[518]() or
                        one(sm_act).SM_SM[515].SM_ASM[517].O_OBJ[519]())
-        c_c = get_defining_component(self._o_obj)
-        self.action_owner_name = ""
-        if self._sm_evt is not None:
-            self.element_type = "Transition"
-            self.action_owner_name = self.get_event_name(self._sm_evt)
-        else:
-            self.element_type = "State"
-            self.action_owner_name = self._sm_state.Name
-        self._path = get_path(self._o_obj, self._o_obj.Name + '::' + self.action_owner_name)
         
+        if self._sm_evt:
+            self.element_type = 'Transition'
+            action_name = self.get_event_name(self._sm_evt)
+            
+        elif self._sm_state:
+            self.element_type = 'State'
+            action_name = self._sm_state.Name
+            
+        self.label = '::'.join([get_parent_label(self._o_obj), self._o_obj.Name,
+                                action_name])
+
+        c_c = get_defining_component(self._o_obj)
         ActionPrebuilder.__init__(self, metamodel, c_c)
 
     def find_symbol(self, node, name):
@@ -1654,22 +1652,22 @@ class TransitionPrebuilder(ActionPrebuilder):
         sm_nlevt = one(event).SM_SEVT[525].SM_NLEVT[526]()
         sm_sgevt = one(event).SM_SEVT[525].SM_SGEVT[526]()
         sm_pevt = one(sm_nlevt).SM_PEVT[527]()
-        # If polymorphic and the polymorphic event is not local
+
+        # If polymorphic and the polymorphic event is not local,
         # use the poly local class name
         if sm_pevt and sm_pevt.SM_ID != sm_nlevt.SM_ID:
             return event.Mning + "::" + sm_pevt.localClassName
+        
         # If an orphaned polymorphic, append that to the name
         if sm_nlevt is not None and sm_pevt is None:
             return event.Mning + "::Orphaned"
+
         #  If a signal event we use only the derived label
         if sm_sgevt is not None:
             return event.Drv_Lbl
+
         # otherwise we combine the label with the event Mning
         return event.Drv_Lbl + ": " + event.Mning
-
-    @ property
-    def label(self):
-        return self._path
 
     def accept_BodyNode(self, node):
         sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
@@ -1721,7 +1719,8 @@ class TransitionPrebuilder(ActionPrebuilder):
 
     
 class DerivedAttributePrebuilder(ActionPrebuilder):
-    element_type = "Derived Base Attribute"
+    element_type = 'Derived Base Attribute'
+    
     def __init__(self, metamodel, o_dbattr):
         self._o_dbattr = o_dbattr
         self._o_obj = one(o_dbattr).O_BATTR[107].O_ATTR[106].O_OBJ[102]()
@@ -1739,7 +1738,7 @@ class DerivedAttributePrebuilder(ActionPrebuilder):
     @property
     def label(self):
         o_attr = one(self._o_dbattr).O_BATTR[107].O_ATTR[106]()
-        return '%s::%s::%s' % (self.c_c.Name, self._o_obj.Name, o_attr.Name)
+        return '::'.join([self.c_c.Name, self._o_obj.Name, o_attr.Name])
 
     def accept_BodyNode(self, node):
         act_dab = self.new('ACT_DAB')
@@ -1755,18 +1754,17 @@ class DerivedAttributePrebuilder(ActionPrebuilder):
     
     
 class RequiredOperationPrebuilder(ActionPrebuilder):
-    element_type = "Required Operaton"
+    element_type = 'Required Operaton'
+    label = None
+    
     def __init__(self, metamodel, spr_ro):
         self._spr_ro = spr_ro
         c_c = one(spr_ro).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016].C_C[4010]()
         c_i = one(spr_ro).SPR_REP[4502].C_R[4500].C_IR[4009].C_I[4012]()
         c_po = one(spr_ro).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016]()
-        self._path = get_path(c_c, c_c.Name + '::' + c_po.Name + '::' + c_i.Name + '::' + spr_ro.Name)
+        self.label = '::'.join([get_parent_label(c_c), c_c.Name, c_po.Name,
+                                c_i.Name, spr_ro.Name])
         ActionPrebuilder.__init__(self, metamodel, c_c)
-
-    @property
-    def label(self):
-        return self._path
 
     def accept_BodyNode(self, node):
         act_rob = self.new('ACT_ROB')
@@ -1791,18 +1789,17 @@ class RequiredOperationPrebuilder(ActionPrebuilder):
 
 
 class RequiredSignalPrebuilder(ActionPrebuilder):
-    element_type = "Required Signal"
+    element_type = 'Required Signal'
+    label = None
+    
     def __init__(self, metamodel, spr_rs):
         self._spr_rs = spr_rs
         c_c = one(spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016].C_C[4010]()
         c_i = one(spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_I[4012]()
         c_po = one(spr_rs).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016]()
-        self._path = get_path(c_c, c_c.Name + '::' + c_po.Name + '::' + c_i.Name + '::' + spr_rs.Name)
+        self.label = '::'.join([get_parent_label(c_c), c_c.Name, c_po.Name,
+                                c_i.Name, spr_rs.Name])
         ActionPrebuilder.__init__(self, metamodel, c_c)  
-
-    @property
-    def label(self):
-        return self._path
 
     def accept_BodyNode(self, node):
         act_rsb = self.new('ACT_RSB')
@@ -1827,19 +1824,17 @@ class RequiredSignalPrebuilder(ActionPrebuilder):
 
 
 class ProvidedOperationPrebuilder(ActionPrebuilder):
-    element_type = "Provided Operation"
+    element_type = 'Provided Operation'
+    
     def __init__(self, metamodel, spr_po):
         self._spr_po = spr_po
         c_c = one(spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016].C_C[4010]()
         c_i = one(spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_I[4012]()
         c_po = one(spr_po).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016]()
-        self._path = get_path(c_c, c_c.Name + '::' + c_po.Name + '::' + c_i.Name + '::' + spr_po.Name)
+        self.label = '::'.join([get_parent_label(c_c), c_c.Name, c_po.Name,
+                                c_i.Name, spr_po.Name])
         ActionPrebuilder.__init__(self, metamodel, c_c)  
         
-    @property
-    def label(self):
-        return self._path
-
     def accept_BodyNode(self, node):
         act_pob = self.new('ACT_POB')
         relate(act_pob, self._spr_po, 687)
@@ -1863,18 +1858,18 @@ class ProvidedOperationPrebuilder(ActionPrebuilder):
 
 
 class ProvidedSignalPrebuilder(ActionPrebuilder):
-    element_type = "Provided Signal"
+    element_type = 'Provided Signal'
+    label = None
+    
     def __init__(self, metamodel, spr_ps):
         self._spr_ps = spr_ps
         c_c = one(spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016].C_C[4010]()
         c_i = one(spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_I[4012]()
         c_po = one(spr_ps).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016]()
-        self._path = get_path(c_c, c_c.Name + '::' + c_po.Name + '::' + c_i.Name + '::' + spr_ps.Name)
-        ActionPrebuilder.__init__(self, metamodel, c_c)  
+        self.label = '::'.join([get_parent_label(c_c), c_c.Name, c_po.Name,
+                                c_i.Name, spr_ps.Name])
 
-    @property
-    def label(self):
-        return self._path
+        ActionPrebuilder.__init__(self, metamodel, c_c)  
 
     def accept_BodyNode(self, node):
         act_psb = self.new('ACT_PSB')
