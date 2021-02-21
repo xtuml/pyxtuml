@@ -27,7 +27,10 @@ import sys
 import xtuml
 import xtuml.tools
 
+from functools import reduce
+
 from xtuml import navigate_one as one
+from xtuml import navigate_many as many
 from xtuml import navigate_subtype as subtype
 from xtuml import where_eq as where
 from xtuml import unrelate
@@ -1893,6 +1896,99 @@ class ProvidedSignalPrebuilder(ActionPrebuilder):
         return v_val
 
 
+def model_paths(instance):
+    '''
+    Get the semantic model path of this instance represented as a list of path
+    segment strings. The provided *instance* must be an instance of one of the
+    following classes:
+    
+    - S_SYNC
+    - C_C
+    - S_EE
+    - O_OBJ
+    - EP_PKG
+    - S_BRG
+    - O_TFR
+    - O_DBATTR
+    - SM_ACT
+    - SPR_RO
+    - SPR_RS
+    - SPR_PO
+    - SPR_PS
+    - C_PO
+
+    If the instance (or any parent) is defined within a package that is
+    referenced by a package reference in the instance population, both the
+    definition path and the path within the referring package are considered.
+    The result is a list of path segment lists representing all locations where
+    the element can be found.
+    '''
+    if instance is None:
+        return [[]]
+
+    parents = []
+    name = ''
+    metaclass = xtuml.get_metaclass(instance)
+    if metaclass.kind in ['S_SYNC', 'C_C', 'S_EE', 'O_OBJ']:
+        parents.append(one(instance).PE_PE[8001].EP_PKG[8000]())
+        name = instance.Name
+    elif metaclass.kind == 'EP_PKG':
+        package_parents = []
+        # direct ancestor of the package
+        direct_parent = one(instance).PE_PE[8001].EP_PKG[8000]()
+        if direct_parent is None:
+            direct_parent = one(instance).PE_PE[8001].C_C[8003]()
+        package_parents.append(direct_parent)
+        # ancestors of any package references
+        ref_parents = many(instance).EP_PKG[1402, 'is referenced by'].PE_PE[8001].EP_PKG[8000]()
+        ref_parents |= many(instance).EP_PKG[1402, 'is referenced by'].PE_PE[8001].C_C[8003]()
+        package_parents.extend(ref_parents)
+        parents.extend(package_parents)
+        name = instance.Name
+    elif metaclass.kind == 'S_BRG':
+        parents.append(one(instance).S_EE[19]())
+        name = instance.Name
+    elif metaclass.kind == 'O_TFR':
+        parents.append(one(instance).O_OBJ[115]())
+        name = instance.Name
+    elif metaclass.kind == 'O_DBATTR':
+        o_attr = one(instance).O_BATTR[107].O_ATTR[102]()
+        parents.append(one(o_attr).O_OBJ[102]())
+        name = o_attr.Name
+    elif metaclass.kind == 'SM_ACT':
+        parent = one(instance).SM_SM[515].SM_ISM[517].O_OBJ[518]()
+        if parent is None:
+            parent = one(instance).SM_SM[515].SM_ASM[517].O_OBJ[519]()
+        parents.append(parent)
+        name = str(instance.Act_ID)  # kind of ugly, but simple
+    elif metaclass.kind in ['SPR_RO', 'SPR_RS']:
+        parents.append(one(instance).SPR_REP[4502].C_R[4500].C_IR[4009].C_PO[4016]())
+        name = instance.Name
+    elif metaclass.kind in ['SPR_PO', 'SPR_PS']:
+        parents.append(one(instance).SPR_PEP[4503].C_P[4501].C_IR[4009].C_PO[4016]())
+        name = instance.Name
+    elif metaclass.kind == 'C_PO':
+        parents.append(one(instance).C_C[4010]())
+        name = instance.Name
+    # produce flattened list of all parent paths
+    parent_paths = reduce(lambda paths, p: paths + model_paths(p), parents, [])
+    # add current element to each parent path
+    return list(map(lambda parent_path: parent_path + [name], parent_paths))
+
+
+def child_of(instance, parent_paths):
+    '''
+    Split the list of input parent paths into segments by the '::' delimiter.
+    If any parent path is a prefix of the model path of the instance, return
+    True. Otherwise return False.
+    '''
+    for parent_path in map(lambda p: p.split('::'), parent_paths):
+        for model_path in model_paths(instance):
+            if parent_path == model_path[:len(parent_path)]:
+                return True
+    return False
+
+
 def prebuild_action(instance):
     '''
     Transform textual OAL actions of an *instance* to instances in the ooaofooa
@@ -1930,7 +2026,7 @@ def prebuild_action(instance):
     return walker.accept(root)
     
                 
-def prebuild_model(metamodel):
+def prebuild_model(metamodel, parent_paths=None):
     '''
     Transform textual OAL actions in a ooaofooa *metamodel* to instances in the
     subsystems Value and Body. Instances of the following classes are supported:
@@ -1944,11 +2040,14 @@ def prebuild_model(metamodel):
     - SPR_RS
     - SPR_PO
     - SPR_PS
+
+    If parent_paths is not empty, only children of those elements will be
+    processed.
     '''
     for kind in ['S_SYNC','S_BRG','O_TFR', 'O_DBATTR', 'SM_ACT', 'SPR_RO',
                  'SPR_RS', 'SPR_PO', 'SPR_PS']:
         for inst in metamodel.select_many(kind):
-            if inst.Suc_Pars:
+            if inst.Suc_Pars and (parent_paths is None or child_of(inst, parent_paths)):
                 prebuild_action(inst)
 
 
@@ -1969,6 +2068,11 @@ def main():
                                         help="set output to PATH",
                                         action="store",
                                         default=None)
+
+    parser.add_option("-f", "--filter", dest="parent_paths",
+                                        help="only parse activities contained by these elements",
+                                        action="append",
+                                        default=None)
     
     (opts, args) = parser.parse_args()
     if len(args) == 0 or opts.output is None:
@@ -1984,7 +2088,7 @@ def main():
     logging.basicConfig(level=levels.get(opts.verbosity, logging.DEBUG))
     
     m = ooaofooa.load_metamodel(args)
-    prebuild_model(m)
+    prebuild_model(m, opts.parent_paths)
     
     xtuml.persist_instances(m, opts.output)
 
