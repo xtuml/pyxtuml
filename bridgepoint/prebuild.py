@@ -223,8 +223,7 @@ class ActionPrebuilder(xtuml.tools.Walker):
         return one(self.pe_pe_cache).S_EE[8001](where(Key_Lett=key_letter))
     
     def r_rel(self, rel_id):
-        where_clause = lambda sel: 'r%d' % sel.Numb == rel_id.lower()
-        return self.any('R_REL', where_clause)
+        return one(self.pe_pe_cache).R_REL[8001](where(Numb=int(rel_id[1:])))
     
     def cnst_syc(self, name):
         where_clause = lambda sel:(ooaofooa.is_contained_in(sel, self.c_c) or
