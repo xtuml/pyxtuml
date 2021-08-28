@@ -1737,7 +1737,7 @@ class DerivedAttributePrebuilder(ActionPrebuilder):
     @property
     def label(self):
         o_attr = one(self._o_dbattr).O_BATTR[107].O_ATTR[106]()
-        return '::'.join([self.c_c.Name, self._o_obj.Name, o_attr.Name])
+        return '::'.join([get_parent_label(self._o_obj), self._o_obj.Name, o_attr.Name])
 
     def accept_BodyNode(self, node):
         act_dab = self.new('ACT_DAB')
