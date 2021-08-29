@@ -1,0 +1,20 @@
+name: Run Unit Tests
+
+on: pull_request
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:               [windows-latest, ubuntu-latest]
+        python-version:   [2.7, 3.x, pypy2, pypy3]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
