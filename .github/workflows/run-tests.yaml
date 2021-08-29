@@ -1,6 +1,6 @@
 name: Run Unit Tests
 
-on: [worflow_dispatch, pull_request]
+on: worflow_dispatch
 
 jobs:
   build:
