@@ -22,10 +22,9 @@ jobs:
       - name: Build pyxtuml
         run: python setup.py build
       - name: Run tests
-        run: pytest tests --doctest-modules --junitxml=junit/test-results-${{ matrix.python-version }}.xml
-      - name: Upload pytest test results
-        uses: actions/upload-artifact@v2
+        run: pytest tests --doctest-modules --junitxml=test-results/test-results-${{ matrix.python-version }}.xml
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
         with:
-          name: pytest-results-${{ matrix.python-version }}
-          path: junit/test-results-${{ matrix.python-version }}.xml
-        if: ${{ always() }}
+          files: test-results/**/*.xml
