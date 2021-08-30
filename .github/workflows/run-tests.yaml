@@ -24,7 +24,9 @@ jobs:
       - name: Run tests
         run: pytest tests --doctest-modules --junitxml=test-results/test-results-${{ matrix.python-version }}.xml
       - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
+        uses: dorny/test-reporter@v1
         if: always()
         with:
-          files: test-results/**/*.xml
+          name: Unit Tests: ${{ matrix.os }}, ${{ matrix.python-version }}
+          path: test-results/**/*.xml
+          reporter: java-junit
