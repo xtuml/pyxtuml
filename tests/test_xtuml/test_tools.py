@@ -18,6 +18,7 @@
 
 import sys
 import unittest
+import pytest
 
 import xtuml.tools
 
@@ -44,7 +45,11 @@ class TestNodePrinter(unittest.TestCase):
         
         w.accept(root)
         
-        s = sys.stdout.getvalue()
+        try:
+            s = sys.stdout.getvalue()
+        except AttributeError:
+            s, _ = self.capfd.readouterr()
+
         expected  = 'Node\n'
         expected += '  Node\n'
         expected += '  Node\n'
@@ -57,7 +62,10 @@ class TestNodePrinter(unittest.TestCase):
         
         w.accept(self)
         
-        s = sys.stdout.getvalue()
+        try:
+            s = sys.stdout.getvalue()
+        except AttributeError:
+            s, _ = self.capfd.readouterr()
         
         self.assertEqual(s, 'TestNodePrinter\n')
 
@@ -67,9 +75,16 @@ class TestNodePrinter(unittest.TestCase):
         
         w.accept(None)
         
-        s = sys.stdout.getvalue()
+        try:
+            s = sys.stdout.getvalue()
+        except AttributeError:
+            s, _ = self.capfd.readouterr()
         
         self.assertEqual(s, '')
+
+    @pytest.fixture(autouse=True)
+    def capfd(self, capfd):
+        self.capfd = capfd
 
 
 class TestIdGenerator(unittest.TestCase):
