@@ -11,6 +11,7 @@ Documentation
 =============
 
 Information on how to use pyxtuml is available at `Read the Docs <http://pyxtuml.readthedocs.io>`__.
+foo
 
 ==============
 Reporting bugs
