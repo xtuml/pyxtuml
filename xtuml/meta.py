@@ -21,7 +21,6 @@ metaclasses, relate instances and perform navigations and queries.
 '''
 
 import logging
-import collections
 
 import xtuml
 
@@ -31,6 +30,14 @@ try:
     from future_builtins import filter, zip
 except ImportError:
     pass
+
+import collections
+try:
+    # Python 3.x
+    collectionsAbc = collections.abc
+except:
+    # Python 2.7
+    collectionsAbc = collections
 
 
 logger = logging.getLogger(__name__)
@@ -741,7 +748,7 @@ class NavChain(object):
         elif isinstance(handle, Class):
             handle = [handle]
         
-        elif not isinstance(handle, collections.Iterable):
+        elif not isinstance(handle, collectionsAbc.Iterable):
             raise MetaException("Unable to navigate across '%s'" % type(handle))
         
         self.handle = handle
