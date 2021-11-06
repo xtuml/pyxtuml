@@ -30,7 +30,6 @@ License
 pyxtuml is licensed under the LGPLv3+, see COPYING and COPYING.LESSER
 for more information.
 
-.. |Build Status| image:: https://travis-ci.org/xtuml/pyxtuml.svg?branch=master
-   :target: https://travis-ci.org/xtuml/pyxtuml
+.. |Build Status| image:: https://github.com/xtuml/pyxtuml/actions/workflows/run-tests.yaml/badge.svg
 .. |Coverage Status| image:: https://coveralls.io/repos/xtuml/pyxtuml/badge.svg?branch=master
    :target: https://coveralls.io/r/xtuml/pyxtuml?branch=master
