@@ -68,7 +68,7 @@ class TestCommand(Command):
         sys.exit(exit_code)
 
 
-setup(name='pyxtuml',
+setup(name='pyxtuml-test',
       version='2.2.2', # ensure that this is the same as in xtuml.version
       description='Library for parsing, manipulating, and generating BridgePoint xtUML models',
       author=u'John Törnblom',
