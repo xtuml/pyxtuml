@@ -50,7 +50,6 @@ class TestLoader(unittest.TestCase):
         globs = resources + os.sep + 'Globals.xtuml'
 
         metamodel = xtuml.load_metamodel([globs, schema])
-        self.assertTrue(False)
         self.assertTrue(metamodel.select_any('S_DT', xtuml.where_eq(Name='integer')) is not None)
         
     @load_docstring
