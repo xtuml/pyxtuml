@@ -74,7 +74,7 @@ with open(path.join(this_directory, 'README.rst')) as f:
     long_description = f.read()
 
 setup(name='pyxtuml',
-      version='2.2.2', # ensure that this is the same as in xtuml.version
+      version='2.3.0', # ensure that this is the same as in xtuml.version
       description='Library for parsing, manipulating, and generating BridgePoint xtUML models',
       long_description=long_description,
       long_description_content_type='text/x-rst',
