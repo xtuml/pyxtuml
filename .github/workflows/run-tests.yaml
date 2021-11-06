@@ -5,7 +5,9 @@ on:
     branches:
       - master
   pull_request:
+    types: [assigned, opened, synchronize, reopened]
   release:
+    types: [created]
 
 jobs:
 
