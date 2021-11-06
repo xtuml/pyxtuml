@@ -41,12 +41,12 @@ jobs:
           name: Unit Test Results (Python ${{ matrix.python-version }})
           path: test-results/test-results-${{ matrix.python-version }}.xml
 
-    event_file:
-      name: "Event File"
-      runs-on: ubuntu-latest
-      steps:
-      - name: Upload
-        uses: actions/upload-artifact@v2
-        with:
-          name: Event File
-          path: ${{ github.event_path }}
+  event_file:
+    name: "Event File"
+    runs-on: ubuntu-latest
+    steps:
+    - name: Upload
+      uses: actions/upload-artifact@v2
+      with:
+        name: Event File
+        path: ${{ github.event_path }}
