@@ -1514,7 +1514,7 @@ class BridgePrebuilder(ActionPrebuilder):
         act_brb = self.new('ACT_BRB')
         relate(act_brb, self._s_brg, 697)
         
-        self.act_act = self.new('ACT_ACT', Type='bridge')
+        self.act_act = self.new('ACT_ACT', Type='bridge', Label=self.label)
         relate(act_brb, self.act_act, 698)
         
         return ActionPrebuilder.accept_BodyNode(self, node)
@@ -1674,14 +1674,14 @@ class TransitionPrebuilder(ActionPrebuilder):
             act_sab = self.new('ACT_SAB')
             relate(act_sab, self._sm_act, 691)
             
-            self.act_act = self.new('ACT_ACT')
+            self.act_act = self.new('ACT_ACT', Type='state', Label=self.label)
             
             relate(act_sab, self.act_act, 698)
         else:
             act_tab = self.new('ACT_TAB')
             relate(act_tab, self._sm_act, 688)
             
-            self.act_act = self.new('ACT_ACT')
+            self.act_act = self.new('ACT_ACT', Type='transition', Label=self.label)
             
             relate(act_tab, self.act_act, 698)
         
