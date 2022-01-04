@@ -1804,7 +1804,7 @@ class RequiredSignalPrebuilder(ActionPrebuilder):
         act_rsb = self.new('ACT_RSB')
         relate(act_rsb, self._spr_rs, 684)
         
-        self.act_act = self.new('ACT_ACT', Type='interface signal')
+        self.act_act = self.new('ACT_ACT', Type='interface signal', Label=self.label)
         relate(act_rsb, self.act_act, 698)
         
         return ActionPrebuilder.accept_BodyNode(self, node)
@@ -1874,7 +1874,7 @@ class ProvidedSignalPrebuilder(ActionPrebuilder):
         act_psb = self.new('ACT_PSB')
         relate(act_psb, self._spr_ps, 686)
         
-        self.act_act = self.new('ACT_ACT', Type='interface signal')
+        self.act_act = self.new('ACT_ACT', Type='interface signal', Label=self.label)
         relate(act_psb, self.act_act, 698)
         
         return ActionPrebuilder.accept_BodyNode(self, node)
