@@ -1620,21 +1620,23 @@ class TransitionPrebuilder(ActionPrebuilder):
     def __init__(self, metamodel, sm_act):
         self._sm_act = sm_act
         self._sm_evt = (one(sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
-                        SM_NSTXN[507].SM_SEME[504].SM_SEVT[503].SM_EVT[525]())
+                        SM_NSTXN[507].SM_SEME[504].SM_SEVT[503].SM_EVT[525]() or
+                        one(sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
+                        SM_CRTXN[507].SM_LEVT[509].SM_SEVT[526].SM_EVT[525]())
         self._sm_state = one(sm_act).SM_AH[514].SM_MOAH[513].SM_STATE[511]()
         self._o_obj = (one(sm_act).SM_SM[515].SM_ISM[517].O_OBJ[518]() or
                        one(sm_act).SM_SM[515].SM_ASM[517].O_OBJ[519]())
-        
-        if self._sm_evt:
-            self.element_type = 'Transition'
-            action_name = self.get_event_name(self._sm_evt)
             
-        elif self._sm_state:
+        if self._sm_state:
             self.element_type = 'State'
             action_name = self._sm_state.Name
+        
+        else:
+            self.element_type = 'Transition'
+            action_name = self.get_txn_name()
             
         self.label = '::'.join([get_parent_label(self._o_obj), self._o_obj.Name,
-                                action_name])
+                                self.get_sm_type(), action_name])
 
         c_c = get_defining_component(self._o_obj)
         ActionPrebuilder.__init__(self, metamodel, c_c)
@@ -1647,26 +1649,49 @@ class TransitionPrebuilder(ActionPrebuilder):
         
         return v_var
 
-    def get_event_name(self, event):
-        sm_nlevt = one(event).SM_SEVT[525].SM_NLEVT[526]()
-        sm_sgevt = one(event).SM_SEVT[525].SM_SGEVT[526]()
-        sm_pevt = one(sm_nlevt).SM_PEVT[527]()
+    def get_event_name(self):
+        if self._sm_evt:
+            sm_nlevt = one(self._sm_evt).SM_SEVT[525].SM_NLEVT[526]()
+            sm_sgevt = one(self._sm_evt).SM_SEVT[525].SM_SGEVT[526]()
+            sm_pevt = one(sm_nlevt).SM_PEVT[527]()
 
-        # If polymorphic and the polymorphic event is not local,
-        # use the poly local class name
-        if sm_pevt and sm_pevt.SM_ID != sm_nlevt.SM_ID:
-            return event.Mning + "::" + sm_pevt.localClassName
-        
-        # If an orphaned polymorphic, append that to the name
-        if sm_nlevt is not None and sm_pevt is None:
-            return event.Mning + "::Orphaned"
+            # If polymorphic and the polymorphic event is not local,
+            # use the poly local class name
+            if sm_pevt and sm_pevt.SM_ID != sm_nlevt.SM_ID:
+                return sm_pevt.localClassName + '::' + self._sm_evt.Mning
+            
+            # If an orphaned polymorphic, append that to the name
+            if sm_nlevt is not None and sm_pevt is None:
+                return 'Orphaned::' + self._sm_evt.Mning
 
-        #  If a signal event we use only the derived label
-        if sm_sgevt is not None:
-            return event.Drv_Lbl
+            #  If a signal event we use only the derived label
+            if sm_sgevt is not None:
+                return self._sm_evt.Drv_Lbl
 
-        # otherwise we combine the label with the event Mning
-        return event.Drv_Lbl + ": " + event.Mning
+            # otherwise we combine the label with the event Mning
+            return self._sm_evt.Drv_Lbl + ": " + self._sm_evt.Mning
+        else:
+            return 'No Event'
+
+    def get_sm_type(self):
+        sm_ism = one(self._sm_act).SM_SM[515].SM_ISM[517]()
+        return 'InstanceStateMachine' if sm_ism else 'ClassStateMachine'
+
+    def get_txn_name(self):
+        dest_state = (one(self._sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
+                      SM_STATE[506]())
+        if dest_state:
+            start_state = (one(self._sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
+                           SM_NSTXN[507].SM_SEME[504].SM_STATE[503]() or
+                           one(self._sm_act).SM_AH[514].SM_TAH[513].SM_TXN[530].
+                           SM_NETXN[507].SM_STATE[508]())
+            if start_state:
+                return (start_state.Name + ' [' + self.get_event_name() + '] => ' +
+                        dest_state.Name)
+            else:
+                # for creation states, use the imaginary "Non Existent" state
+                return ('Non Existent [' + self.get_event_name() + '] => ' +
+                        dest_state.Name)
 
     def accept_BodyNode(self, node):
         sm_moah = one(self._sm_act).SM_AH[514].SM_MOAH[513]()
