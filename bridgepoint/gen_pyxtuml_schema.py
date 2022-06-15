@@ -104,9 +104,10 @@ def description_filter(inst):
             return True
     
 
-def mk_ooaofooa_component(filename):
+def mk_ooaofooa_component(*filenames):
     loader = ooaofooa.Loader()
-    loader.filename_input(filename)
+    for filename in filenames:
+        loader.filename_input(filename)
     
     m = loader.build_metamodel()
 
@@ -182,13 +183,14 @@ def main():
     logging.basicConfig(level=levels.get(opts.verbosity, logging.DEBUG))
 
     ooaofooa_path = args[0] + '/src/org.xtuml.bp.core/models/org.xtuml.bp.core/ooaofooa'
+    ooaofgraphics_path = args[0] + '/src/org.xtuml.bp.ui.canvas/models/org.xtuml.bp.ui.canvas/ooaofgraphics'
     globals_path = args[0] + '/src/org.xtuml.bp.pkg/globals/Globals.xtuml'
     version_path = args[0] + '/src/org.xtuml.bp.pkg/about.mappings'
     
     with open(globals_path, 'r') as f:
         globals_instances = f.read()
         
-    m = mk_ooaofooa_component(ooaofooa_path)
+    m = mk_ooaofooa_component(ooaofooa_path, ooaofgraphics_path)
 
     with open(version_path, 'r') as f:
         version = re.findall(r'0=([\d\.]*)\.qualifier', f.read())[0]
