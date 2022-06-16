@@ -32,12 +32,39 @@ class TestForEach(PrebuildFunctionTestCase):
         relate(pe_pe, o_obj, 8001)
         
     @prebuild_docstring
-    def test_for_each_loop(self):
+    def test_for_each(self):
         '''
         create object instance of A;
         create object instance of A;       
         select many a_set from instances of A;
         for each a in a_set
+        end for;
+        '''
+        act_for = self.metamodel.select_one('ACT_FOR')
+        self.assertTrue(act_for.is_implicit)
+        
+        act_smt = one(act_for).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        act_blk = one(act_for).ACT_BLK[605]()
+        self.assertIsNotNone(act_blk)
+        
+        v_var = one(act_for).V_VAR[614]()
+        self.assertEqual(v_var.Name, 'a')
+        
+        v_var = one(act_for).V_VAR[652]()
+        self.assertEqual(v_var.Name, 'a_set')
+
+        o_obj = one(act_for).O_OBJ[670]()
+        self.assertEqual(o_obj.Key_Lett, 'A')
+        
+    @prebuild_docstring
+    def test_for_each_loop(self):
+        '''
+        create object instance of A;
+        create object instance of A;       
+        select many a_set from instances of A;
+        for each a in a_set loop
         end for;
         '''
         act_for = self.metamodel.select_one('ACT_FOR')
