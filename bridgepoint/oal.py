@@ -868,7 +868,9 @@ class OALParser(object):
                 'PARAM',
                 'RCVD_EVT',
                 'SELF',
-                'SELECTED'
+                'SELECTED',
+                'LOOP',
+                'THEN'
     )
     
     tokens = keywords + (
@@ -1436,26 +1438,47 @@ class OALParser(object):
         p[0] = DeleteNode(variable_name=p[4])
     
     @track_production
-    def p_for_statement(self, p):
+    def p_for_statement_1(self, p):
+        '''statement : FOR EACH variable_name IN variable_name LOOP block END_FOR'''
+        p[0] = ForEachNode(instance_variable_name=p[3],
+                           set_variable_name=p[5],
+                           block=p[7])
+    
+    @track_production
+    def p_for_statement_2(self, p):
         '''statement : FOR EACH variable_name IN variable_name block END_FOR'''
         p[0] = ForEachNode(instance_variable_name=p[3],
                            set_variable_name=p[5],
                            block=p[6])
     
     @track_production
-    def p_while_statement(self, p):
+    def p_while_statement_1(self, p):
+        '''statement : WHILE expression LOOP block END_WHILE'''
+        p[0] = WhileNode(expression=p[2],
+                         block=p[4])
+    
+    @track_production
+    def p_while_statement_2(self, p):
         '''statement : WHILE expression block END_WHILE'''
         p[0] = WhileNode(expression=p[2],
                          block=p[3])
     
     @track_production
-    def p_if_statement(self, p):
+    def p_if_statement_1(self, p):
+        '''statement : IF expression THEN block elif_list else_clause END_IF'''
+        p[0] = IfNode(expression=p[2],
+                      block=p[4],
+                      elif_list=p[5],
+                      else_clause=p[6])
+
+    @track_production
+    def p_if_statement_2(self, p):
         '''statement : IF expression block elif_list else_clause END_IF'''
         p[0] = IfNode(expression=p[2],
                       block=p[3],
                       elif_list=p[4],
                       else_clause=p[5])
-    
+ 
     @track_production       
     def p_elif_list_1(self, p):
         '''elif_list : '''
@@ -1468,7 +1491,13 @@ class OALParser(object):
         p[0].children.insert(0, p[2])
         
     @track_production
-    def p_elif_clause(self, p):
+    def p_elif_clause_1(self, p):
+        '''elif_clause : expression THEN block'''
+        p[0] = ElIfNode(expression=p[1],
+                        block=p[3])
+        
+    @track_production
+    def p_elif_clause_2(self, p):
         '''elif_clause : expression block'''
         p[0] = ElIfNode(expression=p[1],
                         block=p[2])
