@@ -28,7 +28,7 @@ class TestIfStatements(PrebuildFunctionTestCase):
     @prebuild_docstring
     def test_single_if_true(self):
         '''
-        if ( 0 == 0 )
+        if ( 0 == 0 ) then
             return 1;
         end if;
         return 0;
@@ -53,6 +53,45 @@ class TestIfStatements(PrebuildFunctionTestCase):
         
     @prebuild_docstring
     def test_elif(self):
+        '''
+        assign x = 0;
+        if (1 == 0) then
+            assign x = 1;
+        elif (1 == 1) then
+            assign x = 2;
+        end if;
+        return x;
+        '''
+        act_if = self.metamodel.select_one('ACT_IF')
+        self.assertIsNotNone(act_if)
+        
+        act_smt = one(act_if).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_if).V_VAL[625]()
+        self.assertIsNotNone(v_val)
+        
+        act_blk = one(act_if).ACT_BLK[607]()
+        self.assertIsNotNone(act_blk)
+        
+        act_el = many(act_if).ACT_EL[682]()
+        self.assertEqual(len(act_el), 1)
+        
+        act_el = one(act_if).ACT_EL[682]()
+        act_smt = one(act_el).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+
+        v_val = one(act_el).V_VAL[659]()
+        self.assertIsNotNone(v_val)
+        
+        act_blk = one(act_el).ACT_BLK[658]()
+        self.assertIsNotNone(act_blk)
+        
+        act_e = one(act_if).ACT_E[683]()
+        self.assertIsNone(act_e)
+
+    @prebuild_docstring
+    def test_elif_no_then(self):
         '''
         assign x = 0;
         if (1 == 0)
@@ -94,9 +133,9 @@ class TestIfStatements(PrebuildFunctionTestCase):
     def test_elif_else(self):
         '''
         assign x = 0;
-        if (1 == 0)
+        if (1 == 0) then
             assign x = 1;
-        elif (1 == 1)
+        elif (1 == 1) then
             assign x = 2;
         else
             assign x = 3;
