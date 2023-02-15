@@ -15,17 +15,17 @@ jobs:
     strategy:
       matrix:
         os:               [ubuntu-latest, windows-latest]
-        python-version:   [2.7, 3.x, pypy2, pypy3]
+        python-version:   ['2.7', '3.10', 'pypy2.7', 'pypy3.8']
         exclude:
           # excludes pypy 3 on Windows
           - os: windows-latest
-            python-version: pypy3
+            python-version: 'pypy3.8'
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
