@@ -50,7 +50,33 @@ class TestIfStatements(PrebuildFunctionTestCase):
         
         act_e = one(act_if).ACT_E[683]()
         self.assertIsNone(act_e)
+
+    @prebuild_docstring
+    def test_mixed_casing_in_end_if(self):
+        '''
+        if ( 0 == 0 ) then
+            return 1;
+        eNd If;
+        return 0;
+        '''
+        act_if = self.metamodel.select_one('ACT_IF')
+        self.assertIsNotNone(act_if)
         
+        act_smt = one(act_if).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_if).V_VAL[625]()
+        self.assertIsNotNone(v_val)
+        
+        act_blk = one(act_if).ACT_BLK[607]()
+        self.assertIsNotNone(act_blk)
+        
+        act_el = many(act_if).ACT_EL[682]()
+        self.assertEqual(len(act_el), 0)
+        
+        act_e = one(act_if).ACT_E[683]()
+        self.assertIsNone(act_e)
+
     @prebuild_docstring
     def test_elif(self):
         '''

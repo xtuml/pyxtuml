@@ -46,6 +46,27 @@ class TestWhileLoop(PrebuildFunctionTestCase):
         self.assertIsNotNone(act_blk)
 
     @prebuild_docstring
+    def test_mixed_casing_in_end_while(self):
+        '''
+        assign x = 10;
+        while (x > 0)
+            assign x = x - 1;
+        EnD WhIlE;
+        return x;
+        '''
+        act_whl = self.metamodel.select_one('ACT_WHL')
+        self.assertIsNotNone(act_whl)
+        
+        act_smt = one(act_whl).ACT_SMT[603]()
+        self.assertIsNotNone(act_smt)
+        
+        v_val = one(act_whl).V_VAL[626]()
+        self.assertIsNotNone(v_val)
+        
+        act_blk = one(act_whl).ACT_BLK[608]()
+        self.assertIsNotNone(act_blk)
+
+    @prebuild_docstring
     def test_while_loop(self):
         '''
         assign x = 10;
