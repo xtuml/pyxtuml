@@ -968,17 +968,17 @@ class OALParser(object):
         return t
     
     def t_END_FOR(self, t):
-        r"(?i)end[\s]+for"
+        r"[Ee][Nn][Dd][\s]+[Ff][Oo][Rr]"
         t.endlexpos = t.lexpos + len(t.value)
         return t
     
     def t_END_IF(self, t):
-        r"(?i)end[\s]+if"
+        r"[Ee][Nn][Dd][\s]+[Ii][Ff]"
         t.endlexpos = t.lexpos + len(t.value)
         return t
     
     def t_END_WHILE(self, t):
-        r"(?i)end[\s]+while"
+        r"[Ee][Nn][Dd][\s]+[Ww][Hh][Ii][Ll][Ee]"
         t.endlexpos = t.lexpos + len(t.value)
         return t
     
