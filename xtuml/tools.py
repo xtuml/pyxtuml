@@ -17,12 +17,13 @@
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 import uuid
 
-import collections
 try:
     # Python 3.x
+    import collections.abc
     collectionsAbc = collections.abc
 except:
     # Python 2.7
+    import collections
     collectionsAbc = collections
 
 
