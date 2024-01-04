@@ -335,6 +335,8 @@ class Link(dict):
             return False
 
         self[instance].remove(another_instance)
+        if len(self[instance]) == 0:
+            del self[instance]
         return True
         
     def navigate(self, instance):
