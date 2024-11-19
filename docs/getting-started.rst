@@ -3,19 +3,23 @@ Getting Started
 
 Dependencies
 ------------
-In addition to python itself, pyxtuml also depend on the python library 
-`ply <http://www.dabeaz.com/ply>`__. For people running Ubuntu, everything is
-available via apt-get:
+pyxtuml requires ``python3`` and ``pip``. Follow instructions for your specific
+system to install and configure. pyxtuml does not support ``python2``
+
+`pyenv <https://github.com/pyenv/pyenv>`__ is a useful tool for managing
+multiple versions of python on a single system.
+
+pyxtuml also works with `pypy <http://pypy.org>`__.
+
+In order to run the unit tests, ``pytest`` is required:
 
 ::
 
-   $ sudo apt-get install python2.7 python-ply
-
-pyxtuml also works with python3 and `pypy <http://pypy.org>`__.
+    $ python -m pip install pytest
 
 Installation
 ------------
-pyxtuml is published on `pypi <https://pypi.python.org>`__, and thus may be 
+pyxtuml is published on `PyPI <https://pypi.python.org>`__, and thus may be 
 installed using pip:
 
 ::
@@ -23,7 +27,7 @@ installed using pip:
     $ python -m pip install pyxtuml
 
 If you would like to use the most recent changes that might not have made it
-into a release yet, you can bypass pypi and install from github directly:
+into a release yet, you can bypass PyPI and install from github directly:
 
 ::
 
@@ -35,7 +39,17 @@ which also allows you to run test cases:
 ::
 
     $ git clone https://github.com/xtuml/pyxtuml.git
-    $ python pyxtuml/setup.py test
+    $ cd pyxtuml
+    $ python -m pytest
+    $ python -m pip install .
+
+Add ``--editable`` to the last command for local changes to the repository to
+take immediate effect.
+
+Character encoding
+------------------
+
+pyxtuml requires all inputs to be UTF-8 encoded.
 
 Usage example
 -------------
