@@ -1,7 +1,7 @@
 name: Build Release Artifacts
 
-on: 
-  release: 
+on:
+  release:
     types: [published]
 
 jobs:
@@ -9,20 +9,20 @@ jobs:
     name: Build and Release Artifacts
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Get release information
         id: get_release
-        uses: bruceadams/get-release@v1.2.2
+        uses: bruceadams/get-release@v1.3.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python 3
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: 3.x
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ply sphinx sphinx sphinx_rtd_theme
+          python -m pip install -r docs/requirements.txt
       - name: Build manpage
         run: python -m sphinx -b man docs dist
       - name: Archive manpage
