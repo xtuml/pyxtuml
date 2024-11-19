@@ -20,24 +20,11 @@ Perform various xtUML meta operations, e.g. create new metamodels and
 metaclasses, relate instances and perform navigations and queries.
 '''
 
+import collections.abc
 import logging
-
 import xtuml
 
 from functools import partial
-
-try:
-    from future_builtins import filter, zip
-except ImportError:
-    pass
-
-import collections
-try:
-    # Python 3.x
-    collectionsAbc = collections.abc
-except:
-    # Python 2.7
-    collectionsAbc = collections
 
 
 logger = logging.getLogger(__name__)
@@ -750,7 +737,7 @@ class NavChain(object):
         elif isinstance(handle, Class):
             handle = [handle]
         
-        elif not isinstance(handle, collectionsAbc.Iterable):
+        elif not isinstance(handle, collections.abc.Iterable):
             raise MetaException("Unable to navigate across '%s'" % type(handle))
         
         self.handle = handle
