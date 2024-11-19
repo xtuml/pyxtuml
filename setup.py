@@ -17,56 +17,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
 import logging
-import unittest
-import sys
 
-try:
-    from setuptools import setup
-    from setuptools import Command
-    from setuptools.command.build_py import build_py
-except ImportError:
-    from distutils.core import setup
-    from distutils.core  import Command
-    from distutils.command.build_py import build_py
-
+from setuptools import setup
 
 logging.basicConfig(level=logging.DEBUG)
-
-
-class BuildCommand(build_py):
-    
-    def run(self):
-        import xtuml
-        from bridgepoint import oal
-
-        l = xtuml.ModelLoader()
-        l.input('', name='<empty string>')
-        l.build_metamodel()
-        oal.parse('')
-        build_py.run(self)
-
-
-class TestCommand(Command):
-    description = "Execute unit tests"
-    user_options = [('name=', None, 'Limit testing to a single test case or test method')]
-
-    def initialize_options(self):
-        self.name = None
-    
-    def finalize_options(self):
-        if self.name and not self.name.startswith('tests.'):
-            self.name = 'tests.' + self.name
-
-    def run(self):
-        if self.name:
-            suite = unittest.TestLoader().loadTestsFromName(self.name)
-        else:
-            suite = unittest.TestLoader().discover('tests')
-        
-        runner = unittest.TextTestRunner(verbosity=2, buffer=True)
-        exit_code = not runner.run(suite).wasSuccessful()
-        sys.exit(exit_code)
-
 
 from os import path
 this_directory = path.abspath(path.dirname(__file__))
@@ -88,15 +42,17 @@ setup(name='pyxtuml',
           'Topic :: Software Development :: Code Generators',
           'Topic :: Software Development :: Compilers',
           'License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)',
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3.5',
-          'Programming Language :: Python :: 3.6'],
+          'Programming Language :: Python :: 3 :: Only'],
       keywords='xtuml bridgepoint',
       packages=['xtuml', 'bridgepoint'],
       requires=['ply'],
       install_requires=['ply'],
-      setup_requires=['ply'],
-      cmdclass={'build_py': BuildCommand,
-                'test': TestCommand}
-      )
+      setup_requires=['ply'])
 
+# assure PLY parstab and lextab get generated for OAL and SQL parsers
+import xtuml
+ml = xtuml.ModelLoader()
+ml.input('')
+m = ml.build_metamodel()
+import bridgepoint.oal
+bridgepoint.oal.parse('')
