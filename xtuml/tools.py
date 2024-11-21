@@ -15,16 +15,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with pyxtuml. If not, see <http://www.gnu.org/licenses/>.
+import collections.abc
 import uuid
-
-try:
-    # Python 3.x
-    import collections.abc
-    collectionsAbc = collections.abc
-except:
-    # Python 2.7
-    import collections
-    collectionsAbc = collections
 
 
 class IdGenerator(object):
@@ -129,7 +121,7 @@ class Visitor(object):
         pass
     
     
-class OrderedSet(collectionsAbc.MutableSet):
+class OrderedSet(collections.abc.MutableSet):
     '''
     Set that remembers original insertion order.
     '''

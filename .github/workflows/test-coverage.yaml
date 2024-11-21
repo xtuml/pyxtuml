@@ -1,6 +1,6 @@
 name: Run Coverage Analysis
 
-on: 
+on:
   push:
     branches:
       - master
@@ -17,16 +17,14 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: 2.7
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install coveralls
+          python -m pip install -r requirements.txt
+          python -m pip install coveralls
       - name: Run coverage analysis
-        run: coverage run --source=xtuml,bridgepoint setup.py test
+        run: python -m coverage run --source=xtuml,bridgepoint -m pytest
       - name: Upload to Coveralls
-        run: coveralls --service=github
+        run: python -m coveralls --service=github
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}

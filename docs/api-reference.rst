@@ -67,7 +67,7 @@ Tools
 .. autoclass:: xtuml.Walker
    :members: accept, default_accept
 
-   .. autoinstanceattribute:: xtuml.Walker.visitors
+   .. autoattribute:: xtuml.Walker.visitors
       
 .. autoclass:: xtuml.Visitor
    :members: enter, leave, default_enter, default_leave
